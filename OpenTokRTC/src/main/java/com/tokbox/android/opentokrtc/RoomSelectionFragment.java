@@ -1,5 +1,6 @@
 package com.tokbox.android.opentokrtc;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,18 @@ import android.widget.EditText;
 public class RoomSelectionFragment extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "RoomSelectionFragment";
+    private Callbacks mCallbacks = sDummyCallbacks;
+
+    public interface Callbacks {
+        public void onRoomSelected(String roomName);
+    }
+
+    private static Callbacks sDummyCallbacks = new Callbacks() {
+        @Override
+        public void onRoomSelected(String roomName) {
+            return;
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -24,6 +37,24 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
         joinRoomButton.setOnClickListener(this);
 
         return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        if (!(activity instanceof Callbacks)) {
+            throw new IllegalStateException("Activity must implement fragment's callback");
+        }
+
+        mCallbacks = (Callbacks) activity;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        mCallbacks = sDummyCallbacks;
     }
 
     @Override
@@ -42,5 +73,7 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
         String roomName = roomNameInput.getText().toString().replace(" ", "");
 
         Log.i(TAG, "the room name is " + roomName);
+
+        mCallbacks.onRoomSelected(roomName);
     }
 }

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,7 +12,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.os.Build;
 
-public class RoomSelectionActivity extends Activity {
+public class RoomSelectionActivity extends Activity implements RoomSelectionFragment.Callbacks {
+
+    private static final String TAG = "RoomSelectionActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,11 @@ public class RoomSelectionActivity extends Activity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRoomSelected(String roomName) {
+        Log.i(TAG, "room selected: " + roomName);
     }
 
 }
