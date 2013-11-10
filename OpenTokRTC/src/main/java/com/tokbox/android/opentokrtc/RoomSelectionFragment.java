@@ -7,11 +7,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 
 /**
  * Created by ankur on 11/9/13.
  */
 public class RoomSelectionFragment extends Fragment implements View.OnClickListener {
+
+    private static final String TAG = "RoomSelectionFragment";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -33,6 +36,11 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
     }
 
     private void joinRoom() {
-        Log.i("OpenTokRTC", "join room button clicked.");
+        Log.i(TAG, "join room button clicked.");
+
+        EditText roomNameInput = (EditText) getView().findViewById(R.id.input_room_name);
+        String roomName = roomNameInput.getText().toString();
+
+        Log.i(TAG, "the room name is " + roomName);
     }
 }
