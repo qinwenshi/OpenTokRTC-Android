@@ -39,7 +39,7 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
         Log.i(TAG, "join room button clicked.");
 
         EditText roomNameInput = (EditText) getView().findViewById(R.id.input_room_name);
-        String roomName = roomNameInput.getText().toString();
+        String roomName = roomNameInput.getText().toString().replace(" ", "");
 
         Log.i(TAG, "the room name is " + roomName);
     }
