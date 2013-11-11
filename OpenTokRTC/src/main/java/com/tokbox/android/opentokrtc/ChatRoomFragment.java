@@ -31,7 +31,7 @@ import java.net.URL;
 /**
  * Created by ankur on 11/10/13.
  */
-public class ChatRoomFragment extends Fragment implements Session.Listener {
+public class ChatRoomFragment extends Fragment implements Session.Listener, Publisher.Listener {
 
     public static final String ARG_ROOM_ID = "room_id";
     public static final String TAG = "ChatRoomFragment";
@@ -39,6 +39,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener {
     protected String mRoomName;
     protected Room mRoom;
     protected Session mSession;
+    protected Publisher mPublisher;
 
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
@@ -161,6 +162,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener {
     @Override
     public void onSessionConnected() {
         Log.i(TAG, "session connected.");
+        mPublisher = Publisher.newInstance(getActivity(), this, null);
+        mSession.publish(mPublisher);
     }
 
     @Override
@@ -191,6 +194,26 @@ public class ChatRoomFragment extends Fragment implements Session.Listener {
     @Override
     public void onSessionException(OpentokException e) {
         Log.e(TAG, "session exception: " + e.getMessage());
+    }
+
+    @Override
+    public void onPublisherStreamingStarted() {
+        Log.i(TAG, "publisher is streaming.");
+    }
+
+    @Override
+    public void onPublisherStreamingStopped() {
+        Log.i(TAG, "publisher is not streaming.");
+    }
+
+    @Override
+    public void onPublisherChangedCamera(int i) {
+        Log.i(TAG, "publisher changed camera.");
+    }
+
+    @Override
+    public void onPublisherException(OpentokException e) {
+        Log.e(TAG, "publisher exception: " + e.getMessage());
     }
 
 }
