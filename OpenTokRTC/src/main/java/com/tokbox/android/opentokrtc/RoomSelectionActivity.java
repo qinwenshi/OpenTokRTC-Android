@@ -1,17 +1,11 @@
 package com.tokbox.android.opentokrtc;
 
 import android.app.Activity;
-import android.app.ActionBar;
-import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
 
 public class RoomSelectionActivity extends Activity implements RoomSelectionFragment.Callbacks {
 
@@ -55,7 +49,7 @@ public class RoomSelectionActivity extends Activity implements RoomSelectionFrag
         Log.i(TAG, "room selected: " + roomName);
 
         Intent enterChatRoomIntent = new Intent(this, ChatRoomActivity.class);
-        enterChatRoomIntent.putExtra(ChatRoomFragment.EXTRA_ROOM, roomName);
+        enterChatRoomIntent.putExtra(ChatRoomFragment.ARG_ROOM_ID, roomName);
         startActivity(enterChatRoomIntent);
     }
 

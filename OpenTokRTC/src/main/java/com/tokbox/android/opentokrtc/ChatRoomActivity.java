@@ -1,9 +1,7 @@
 package com.tokbox.android.opentokrtc;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
 /**
  * Created by ankur on 11/10/13.
@@ -17,8 +15,8 @@ public class ChatRoomActivity extends Activity {
 
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();
-            arguments.putString(ChatRoomFragment.EXTRA_ROOM,
-                    getIntent().getStringExtra(ChatRoomFragment.EXTRA_ROOM));
+            arguments.putString(ChatRoomFragment.ARG_ROOM_ID,
+                    getIntent().getStringExtra(ChatRoomFragment.ARG_ROOM_ID));
             ChatRoomFragment chatRoomFragment = new ChatRoomFragment();
             chatRoomFragment.setArguments(arguments);
             getFragmentManager().beginTransaction()

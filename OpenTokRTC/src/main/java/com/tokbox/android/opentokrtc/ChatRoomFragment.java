@@ -12,7 +12,7 @@ import android.view.ViewGroup;
  */
 public class ChatRoomFragment extends Fragment {
 
-    public static final String EXTRA_ROOM = "com.tokbox.android.opentokrtc.ChatRoomFragment.room";
+    public static final String ARG_ROOM_ID = "room_id";
     public static final String TAG = "ChatRoomFragment";
 
     /**
@@ -26,7 +26,7 @@ public class ChatRoomFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String roomName = getArguments().getString(EXTRA_ROOM);
+        String roomName = getArguments().getString(ARG_ROOM_ID);
         if (roomName != null) {
             // TODO: initialize everything
             Log.i(TAG, "initializing chat room fragment for room: " + roomName);
