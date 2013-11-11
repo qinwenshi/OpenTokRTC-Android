@@ -14,6 +14,7 @@ import com.opentok.android.OpentokException;
 import com.opentok.android.Publisher;
 import com.opentok.android.Session;
 import com.opentok.android.Stream;
+import com.opentok.android.Subscriber;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,11 +29,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
  * Created by ankur on 11/10/13.
  */
-public class ChatRoomFragment extends Fragment implements Session.Listener, Publisher.Listener {
+public class ChatRoomFragment extends Fragment implements Session.Listener, Publisher.Listener, Subscriber.Listener {
 
     public static final String ARG_ROOM_ID = "room_id";
     public static final String TAG = "ChatRoomFragment";
@@ -41,6 +43,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     protected Room mRoom;
     protected Session mSession;
     protected Publisher mPublisher;
+    protected Subscriber mSubscriber;
+    protected ArrayList<Stream> mStreams;
 
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
@@ -178,6 +182,17 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onSessionReceivedStream(Stream stream) {
         Log.i(TAG, "stream received: " + stream.getStreamId());
+
+        if (mPublisher != null && !mPublisher.getStreamId().equals(stream.getStreamId())) {
+            if (mSubscriber == null) {
+                mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
+                FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
+                subscriberContainer.addView(mSubscriber.getView());
+                mSession.subscribe(mSubscriber);
+            } else {
+                mStreams.add(stream);
+            }
+        }
     }
 
     @Override
@@ -218,6 +233,21 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onPublisherException(OpentokException e) {
         Log.e(TAG, "publisher exception: " + e.getMessage());
+    }
+
+    @Override
+    public void onSubscriberConnected(com.opentok.android.Subscriber subscriber) {
+
+    }
+
+    @Override
+    public void onSubscriberVideoDisabled(com.opentok.android.Subscriber subscriber) {
+
+    }
+
+    @Override
+    public void onSubscriberException(com.opentok.android.Subscriber subscriber, com.opentok.android.OpentokException e) {
+
     }
 
 }
