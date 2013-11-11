@@ -18,7 +18,8 @@ public class ChatRoomFragment extends Fragment {
     public static final String ARG_ROOM_ID = "room_id";
     public static final String TAG = "ChatRoomFragment";
 
-    private String mRoomName;
+    protected String mRoomName;
+    protected Room mRoom;
 
     private class GetRoomDataTask extends AsyncTask<URL, Void, Room> {
 
@@ -65,8 +66,13 @@ public class ChatRoomFragment extends Fragment {
         return mRoomName;
     }
 
+    protected void setRoom(Room room) {
+        Log.i(TAG, "setting room: " + room.toString());
+        mRoom = room;
+    }
+
     /**
-     * Initialization occurs as soon as a new roomName has been set
+     * Initialization occurs as soon as a new mRoomName has been set
      */
     private void initializeRoom() {
         Log.i(TAG, "initializing chat room fragment for room: " + mRoomName);
