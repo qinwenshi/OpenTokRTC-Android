@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import com.opentok.android.Connection;
 import com.opentok.android.OpentokException;
@@ -164,6 +165,9 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         Log.i(TAG, "session connected.");
         mPublisher = Publisher.newInstance(getActivity(), this, null);
         mSession.publish(mPublisher);
+
+        FrameLayout publisherContainer = (FrameLayout) getView().findViewById(R.id.publisherContainer);
+        publisherContainer.addView(mPublisher.getView());
     }
 
     @Override
