@@ -8,7 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.opentok.android.Connection;
+import com.opentok.android.OpentokException;
+import com.opentok.android.Publisher;
 import com.opentok.android.Session;
+import com.opentok.android.Stream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -39,6 +43,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener {
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
         // TODO: support cancellation and progress indicator?
+        // TODO: better error handling
 
         protected HttpClient mHttpClient;
         protected HttpGet mHttpGet;
@@ -129,12 +134,18 @@ public class ChatRoomFragment extends Fragment implements Session.Listener {
     protected void setRoom(Room room) {
         Log.i(TAG, "setting room: " + room.toString());
         mRoom = room;
-        connectToRoom();
+        enterRoom();
     }
 
-    protected void connectToRoom() {
+    protected void enterRoom() {
         mSession = Session.newInstance(getActivity(), mRoom.getSessionId(), this);
         mSession.connect(mRoom.getApiKey(), mRoom.getToken());
+    }
+
+    protected void leaveRoom() {
+        // TODO: make sure this method is called before the activity goes away
+        mSession.disconnect();
+        mSession = null;
     }
 
     /**
@@ -158,27 +169,27 @@ public class ChatRoomFragment extends Fragment implements Session.Listener {
     }
 
     @Override
-    public void onSessionReceivedStream(com.opentok.android.Stream stream) {
+    public void onSessionReceivedStream(Stream stream) {
         Log.i(TAG, "stream received: " + stream.getStreamId());
     }
 
     @Override
-    public void onSessionDroppedStream(com.opentok.android.Stream stream) {
+    public void onSessionDroppedStream(Stream stream) {
         Log.i(TAG, "stream dropped: " + stream.getStreamId());
     }
 
     @Override
-    public void onSessionCreatedConnection(com.opentok.android.Connection connection) {
+    public void onSessionCreatedConnection(Connection connection) {
         Log.i(TAG, "connection created: " + connection.getConnectionId());
     }
 
     @Override
-    public void onSessionDroppedConnection(com.opentok.android.Connection connection) {
+    public void onSessionDroppedConnection(Connection connection) {
         Log.i(TAG, "connection dropped: " + connection.getConnectionId());
     }
 
     @Override
-    public void onSessionException(com.opentok.android.OpentokException e) {
+    public void onSessionException(OpentokException e) {
         Log.e(TAG, "session exception: " + e.getMessage());
     }
 
