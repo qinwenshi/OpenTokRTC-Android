@@ -3,6 +3,7 @@ package com.tokbox.android.opentokrtc;
 import android.app.Activity;
 import android.app.ActionBar;
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,6 +53,10 @@ public class RoomSelectionActivity extends Activity implements RoomSelectionFrag
     @Override
     public void onRoomSelected(String roomName) {
         Log.i(TAG, "room selected: " + roomName);
+
+        Intent enterChatRoomIntent = new Intent(this, ChatRoomActivity.class);
+        enterChatRoomIntent.putExtra(ChatRoomActivity.EXTRA_ROOM, roomName);
+        startActivity(enterChatRoomIntent);
     }
 
 }
