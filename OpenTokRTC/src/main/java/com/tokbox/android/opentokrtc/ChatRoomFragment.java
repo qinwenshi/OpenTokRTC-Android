@@ -8,6 +8,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -21,16 +33,61 @@ public class ChatRoomFragment extends Fragment {
     protected String mRoomName;
     protected Room mRoom;
 
-    private class GetRoomDataTask extends AsyncTask<URL, Void, Room> {
+    private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
+
+        // TODO: support cancellation and progress indicator?
+
+        protected HttpClient mHttpClient;
+        protected HttpGet mHttpGet;
+
+        public GetRoomDataTask() {
+            mHttpClient = new DefaultHttpClient();
+        }
 
         @Override
-        protected Room doInBackground(URL... params) {
-            return new Room("", "", "");
+        protected Room doInBackground(String... params) {
+            String sessionId = null;
+            String token = null;
+            String apiKey = null;
+            initializeGetRequest(params[0]);
+            try {
+                HttpResponse roomResponse = mHttpClient.execute(mHttpGet);
+                HttpEntity roomEntity = roomResponse.getEntity();
+                String temp = EntityUtils.toString(roomEntity);
+                Log.i(TAG, "retrieved room response: " + temp);
+                JSONObject roomJson = new JSONObject(temp);
+                sessionId = roomJson.getString("sid");
+                token = roomJson.getString("token");
+                apiKey = roomJson.getString("apiKey");
+            } catch (Exception exception) {
+                Log.e(TAG, "could not get room data: " + exception.getMessage());
+            }
+            return new Room(params[0], sessionId, token, apiKey);
         }
 
         @Override
         protected void onPostExecute(final Room result) {
+            // TODO: it might be better to set up some kind of callback interface
+            setRoom(result);
+        }
 
+        protected void initializeGetRequest(String room) {
+            URI roomURI;
+            URL url;
+            // TODO: construct urlStr from injectable values for testing
+            String urlStr = "https://opentokrtc.com/" + room + ".json";
+            try {
+                url = new URL(urlStr);
+                roomURI = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+            } catch (URISyntaxException exception) {
+                Log.e(TAG, "the room URI is malformed: " + exception.getMessage());
+                return;
+            } catch (MalformedURLException exception) {
+                Log.e(TAG, "the room URI is malformed: " + exception.getMessage());
+                return;
+            }
+            // TODO: check if alternate constructor will escape invalid characters properly, might be able to avoid all above code in this method
+            mHttpGet = new HttpGet(roomURI);
         }
     }
 
@@ -77,5 +134,7 @@ public class ChatRoomFragment extends Fragment {
     private void initializeRoom() {
         Log.i(TAG, "initializing chat room fragment for room: " + mRoomName);
         getActivity().setTitle(mRoomName);
+        GetRoomDataTask task = new GetRoomDataTask();
+        task.execute(mRoomName);
     }
 }
