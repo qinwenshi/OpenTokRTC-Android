@@ -2,6 +2,7 @@ package com.tokbox.android.opentokrtc;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 /**
  * Created by ankur on 11/10/13.
@@ -15,6 +16,9 @@ public class ChatRoomActivity extends Activity {
 
         // Show the Up button in the action bar.
         getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Stop screen from going to sleep
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();
