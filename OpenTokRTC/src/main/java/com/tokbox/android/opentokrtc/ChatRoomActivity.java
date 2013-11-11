@@ -10,19 +10,21 @@ import android.util.Log;
  */
 public class ChatRoomActivity extends Activity {
 
-    public static final String EXTRA_ROOM = "com.tokbox.android.opentokrtc.ChatRoomActivity.room";
     public static final String TAG = "ChatRoomActivity";
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent = getIntent();
-        String roomName = intent.getStringExtra(EXTRA_ROOM);
-        if (roomName == null) {
-            throw new IllegalStateException("Chat Room Activity cannot be created without a room");
+        if (savedInstanceState == null) {
+            Bundle arguments = new Bundle();
+            arguments.putString(ChatRoomFragment.EXTRA_ROOM,
+                    getIntent().getStringExtra(ChatRoomFragment.EXTRA_ROOM));
+            ChatRoomFragment chatRoomFragment = new ChatRoomFragment();
+            chatRoomFragment.setArguments(arguments);
+            getFragmentManager().beginTransaction()
+                    .add(R.id.container, chatRoomFragment)
+                    .commit();
         }
-
-        Log.i(TAG, "chat room activity started for room: " + roomName);
 
         setContentView(R.layout.activity_chat_room);
     }
