@@ -13,6 +13,9 @@ public class ChatRoomActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Show the Up button in the action bar.
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();
             arguments.putString(ChatRoomFragment.ARG_ROOM_ID,

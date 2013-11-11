@@ -22,7 +22,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ChatRoomActivity" />
+        <activity
+            android:name="com.tokbox.android.opentokrtc.ChatRoomActivity"
+            android:parentActivityName=".RoomSelectionActivity"/>
     </application>
 
 </manifest>
