@@ -30,6 +30,7 @@ public class ChatRoomFragment extends Fragment {
         if (roomName != null) {
             // TODO: initialize everything
             Log.i(TAG, "initializing chat room fragment for room: " + roomName);
+            getActivity().setTitle(roomName);
         }
     }
 
