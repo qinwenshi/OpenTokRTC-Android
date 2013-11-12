@@ -212,6 +212,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
         subscriberContainer.addView(mSubscriber.getView());
         mSession.subscribe(mSubscriber);
+        mStreamSpinner.setSelection(mStreams.indexOf(stream));
     }
 
     @Override
@@ -253,6 +254,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         if (mPublisher != null && ((!mIsPublisherStreaming) || (mIsPublisherStreaming && !mPublisher.getStreamId().equals(stream.getStreamId())))) {
 
+            // TODO: draw attention to the spinner
             mStreams.add(stream);
 
             if (mSubscriber == null) {
@@ -265,6 +267,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     public void onSessionDroppedStream(Stream stream) {
         Log.i(TAG, "stream dropped: " + stream.getStreamId());
 
+        // TODO: draw attention to the spinner
         mStreams.remove(stream);
 
         if (stream.getStreamId().equals(mSubscriber.getStream().getStreamId())) {
