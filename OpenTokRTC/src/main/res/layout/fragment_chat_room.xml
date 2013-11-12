@@ -18,4 +18,9 @@
         android:layout_height="@dimen/publisher_height_default"
         android:layout_width="@dimen/publisher_width_default" />
 
+    <Spinner android:id="@+id/streamSelectionSpinner"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_alignParentBottom="true"/>
+
 </RelativeLayout>

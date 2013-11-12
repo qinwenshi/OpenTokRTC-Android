@@ -7,7 +7,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.Spinner;
 
 import com.opentok.android.Connection;
 import com.opentok.android.OpentokException;
@@ -34,7 +37,7 @@ import java.util.ArrayList;
 /**
  * Created by ankur on 11/10/13.
  */
-public class ChatRoomFragment extends Fragment implements Session.Listener, Publisher.Listener, Subscriber.Listener {
+public class ChatRoomFragment extends Fragment implements Session.Listener, Publisher.Listener, Subscriber.Listener, AdapterView.OnItemSelectedListener {
 
     public static final String ARG_ROOM_ID = "room_id";
     public static final String TAG = "ChatRoomFragment";
@@ -47,9 +50,11 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     protected boolean mIsPublisherStreaming;
     protected Subscriber mSubscriber;
     protected ArrayList<Stream> mStreams;
+    protected ArrayAdapter<Stream> mStreamArrayAdapter;
 
     protected FrameLayout mSubscriberContainer;
     protected FrameLayout mPublisherContainer;
+    protected Spinner mStreamSpinner;
 
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
@@ -127,6 +132,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         setRoomName(roomName);
 
         mStreams = new ArrayList<Stream>();
+        mStreamArrayAdapter = new ArrayAdapter<Stream>(getActivity(), android.R.layout.simple_spinner_item, mStreams);
+        mStreamArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mIsPublisherStreaming = false;
     }
 
@@ -138,6 +145,9 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         mSubscriberContainer = (FrameLayout) rootView.findViewById(R.id.subscriberContainer);
         mPublisherContainer = (FrameLayout) rootView.findViewById(R.id.publisherContainer);
+        mStreamSpinner = (Spinner) rootView.findViewById(R.id.streamSelectionSpinner);
+        mStreamSpinner.setAdapter(mStreamArrayAdapter);
+        mStreamSpinner.setOnItemSelectedListener(this);
 
         return rootView;
     }
@@ -317,4 +327,13 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         Log.e(TAG, "subscriber exception: " + e.getMessage());
     }
 
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        Log.i(TAG, "item selected in spinner.");
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+        Log.i(TAG, "nothing selected in spinner.");
+    }
 }
