@@ -1,10 +1,12 @@
 package com.tokbox.android.opentokrtc;
 
 import android.app.Fragment;
+import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -128,6 +130,9 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         Log.i(TAG, "onCreate");
 
+        // Maintain our instance alive across rotations.
+        setRetainInstance(true);
+
         String roomName = getArguments().getString(ARG_ROOM_ID);
         setRoomName(roomName);
 
@@ -149,22 +154,46 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         mStreamSpinner.setAdapter(mStreamArrayAdapter);
         mStreamSpinner.setOnItemSelectedListener(this);
 
+        // If we already have a publisher or a subscriber view add them
+        // this happens after a rotation
+        if(mSubscriber != null) {
+            FrameLayout subscriberContainer = (FrameLayout) rootView.findViewById(R.id.subscriberContainer);
+            subscriberContainer.addView(mSubscriber.getView());
+        }
+        if(mPublisher != null) {
+            FrameLayout publisherContainer = (FrameLayout) rootView.findViewById(R.id.publisherContainer);
+            publisherContainer.addView(mPublisher.getView());
+        }
+
         return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        // Publisher and subscriber views are reused so we have to remove them from their parents.
+        FrameLayout publisherContainer = (FrameLayout) getView().findViewById(R.id.publisherContainer);
+        publisherContainer.removeAllViews();
+
+        FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
+        subscriberContainer.removeAllViews();
+
+        super.onDestroyView();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-
         Log.i(TAG, "onStop");
+    }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy");
         if (mSession != null) {
             mSession.disconnect();
         }
-        getActivity().finish();
     }
-
-
 
     public void setRoomName(String roomName) {
         Log.i(TAG, "setRoomName");
@@ -209,6 +238,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     private void subscribeToStream(Stream stream) {
         Log.i(TAG, "subscribing to stream: " + stream.getStreamId());
         mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
+        ((GLSurfaceView)mSubscriber.getView()).setPreserveEGLContextOnPause(true);
         FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
         subscriberContainer.addView(mSubscriber.getView());
         mSession.subscribe(mSubscriber);
@@ -221,6 +251,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         if (mPublisher == null) {
             mPublisher = Publisher.newInstance(getActivity(), this, null);
+            ((GLSurfaceView)mPublisher.getView()).setZOrderMediaOverlay(true);
+            ((GLSurfaceView)mPublisher.getView()).setPreserveEGLContextOnPause(true);
             mSession.publish(mPublisher);
             mIsPublisherStreaming = false;
 
