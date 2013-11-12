@@ -41,10 +41,15 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
     protected String mRoomName;
     protected Room mRoom;
+
     protected Session mSession;
     protected Publisher mPublisher;
+    protected boolean mIsPublisherStreaming;
     protected Subscriber mSubscriber;
     protected ArrayList<Stream> mStreams;
+
+    protected FrameLayout mSubscriberContainer;
+    protected FrameLayout mPublisherContainer;
 
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
@@ -116,17 +121,43 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.i(TAG, "onCreate");
+
         String roomName = getArguments().getString(ARG_ROOM_ID);
         setRoomName(roomName);
+
+        mStreams = new ArrayList<Stream>();
+        mIsPublisherStreaming = false;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat_room, container, false);
+        Log.i(TAG, "onCreateView");
+
+        View rootView = inflater.inflate(R.layout.fragment_chat_room, container, false);
+
+        mSubscriberContainer = (FrameLayout) rootView.findViewById(R.id.subscriberContainer);
+        mPublisherContainer = (FrameLayout) rootView.findViewById(R.id.publisherContainer);
+
+        return rootView;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        Log.i(TAG, "onStop");
+
+        if (mSession != null) {
+            mSession.disconnect();
+        }
+        getActivity().finish();
     }
 
 
+
     public void setRoomName(String roomName) {
+        Log.i(TAG, "setRoomName");
         if (roomName != null && !roomName.equals(mRoomName)) {
             mRoomName = roomName;
             initializeRoom();
@@ -144,14 +175,15 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     }
 
     protected void enterRoom() {
+        Log.i(TAG, "enterRoom");
         mSession = Session.newInstance(getActivity(), mRoom.getSessionId(), this);
         mSession.connect(mRoom.getApiKey(), mRoom.getToken());
     }
 
     protected void leaveRoom() {
+        Log.i(TAG, "leaveRoom");
         // TODO: make sure this method is called before the activity goes away
         mSession.disconnect();
-        mSession = null;
     }
 
     /**
@@ -164,33 +196,57 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         task.execute(mRoomName);
     }
 
+    private void subscribeToStream(Stream stream) {
+        Log.i(TAG, "subscribing to stream: " + stream.getStreamId());
+        mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
+        FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
+        subscriberContainer.addView(mSubscriber.getView());
+        mSession.subscribe(mSubscriber);
+    }
+
     @Override
     public void onSessionConnected() {
         Log.i(TAG, "session connected.");
-        mPublisher = Publisher.newInstance(getActivity(), this, null);
-        mSession.publish(mPublisher);
 
-        FrameLayout publisherContainer = (FrameLayout) getView().findViewById(R.id.publisherContainer);
-        publisherContainer.addView(mPublisher.getView());
+        if (mPublisher == null) {
+            mPublisher = Publisher.newInstance(getActivity(), this, null);
+            mSession.publish(mPublisher);
+            mIsPublisherStreaming = false;
+
+            FrameLayout publisherContainer = (FrameLayout) getView().findViewById(R.id.publisherContainer);
+            publisherContainer.addView(mPublisher.getView());
+        }
     }
 
     @Override
     public void onSessionDisconnected() {
         Log.i(TAG, "session disconnected.");
+
+        if (mPublisher != null) {
+            mPublisherContainer.removeView(mPublisher.getView());
+        }
+
+        if (mSubscriber != null) {
+            mSubscriberContainer.removeView(mSubscriber.getView());
+        }
+
+        mPublisher = null;
+        mIsPublisherStreaming = false;
+        mSubscriber = null;
+        mStreams.clear();
+        mSession = null;
     }
 
     @Override
     public void onSessionReceivedStream(Stream stream) {
         Log.i(TAG, "stream received: " + stream.getStreamId());
 
-        if (mPublisher != null && !mPublisher.getStreamId().equals(stream.getStreamId())) {
+        if (mPublisher != null && ((!mIsPublisherStreaming) || (mIsPublisherStreaming && !mPublisher.getStreamId().equals(stream.getStreamId())))) {
+
+            mStreams.add(stream);
+
             if (mSubscriber == null) {
-                mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
-                FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
-                subscriberContainer.addView(mSubscriber.getView());
-                mSession.subscribe(mSubscriber);
-            } else {
-                mStreams.add(stream);
+                subscribeToStream(stream);
             }
         }
     }
@@ -198,6 +254,16 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onSessionDroppedStream(Stream stream) {
         Log.i(TAG, "stream dropped: " + stream.getStreamId());
+
+        mStreams.remove(stream);
+
+        if (stream.getStreamId().equals(mSubscriber.getStream().getStreamId())) {
+            mSubscriberContainer.removeView(mSubscriber.getView());
+            mSubscriber = null;
+            if (!mStreams.isEmpty()) {
+                subscribeToStream(mStreams.get(0));
+            }
+        }
     }
 
     @Override
@@ -218,6 +284,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onPublisherStreamingStarted() {
         Log.i(TAG, "publisher is streaming.");
+        mIsPublisherStreaming = true;
     }
 
     @Override
@@ -236,18 +303,18 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     }
 
     @Override
-    public void onSubscriberConnected(com.opentok.android.Subscriber subscriber) {
-
+    public void onSubscriberConnected(Subscriber subscriber) {
+        Log.i(TAG, "subscriber connected.");
     }
 
     @Override
-    public void onSubscriberVideoDisabled(com.opentok.android.Subscriber subscriber) {
-
+    public void onSubscriberVideoDisabled(Subscriber subscriber) {
+        Log.i(TAG, "subscriber video disabled.");
     }
 
     @Override
-    public void onSubscriberException(com.opentok.android.Subscriber subscriber, com.opentok.android.OpentokException e) {
-
+    public void onSubscriberException(Subscriber subscriber, OpentokException e) {
+        Log.e(TAG, "subscriber exception: " + e.getMessage());
     }
 
 }
