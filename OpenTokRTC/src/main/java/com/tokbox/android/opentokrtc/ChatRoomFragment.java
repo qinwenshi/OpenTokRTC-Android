@@ -1,5 +1,6 @@
 package com.tokbox.android.opentokrtc;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
@@ -166,6 +167,14 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         }
 
         return rootView;
+    }
+
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        if (mRoomName != null) {
+            activity.setTitle(mRoomName);
+        }
     }
 
     @Override
