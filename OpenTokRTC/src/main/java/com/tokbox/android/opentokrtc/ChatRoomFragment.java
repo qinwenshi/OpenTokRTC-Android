@@ -256,6 +256,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         mPublisher = null;
         mIsPublisherStreaming = false;
+        mSession.unsubscribe(mSubscriber);
         mSubscriber = null;
         mStreams.clear();
         mStreamArrayAdapter.notifyDataSetChanged();
