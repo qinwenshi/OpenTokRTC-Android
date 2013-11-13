@@ -207,9 +207,15 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     }
 
     private void subscribeToStream(Stream stream) {
+        // check to see if we are already subscribing to this stream
+        if (mSubscriber != null && mSubscriber.getStream().getStreamId().equals(stream.getStreamId())) {
+            return;
+        }
+
         Log.i(TAG, "subscribing to stream: " + stream.getStreamId());
         mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
         FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
+        subscriberContainer.removeAllViews();
         subscriberContainer.addView(mSubscriber.getView());
         mSession.subscribe(mSubscriber);
         mStreamSpinner.setSelection(mStreams.indexOf(stream));
@@ -245,6 +251,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         mIsPublisherStreaming = false;
         mSubscriber = null;
         mStreams.clear();
+        mStreamArrayAdapter.notifyDataSetChanged();
         mSession = null;
     }
 
@@ -256,6 +263,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
             // TODO: draw attention to the spinner
             mStreams.add(stream);
+            mStreamArrayAdapter.notifyDataSetChanged();
 
             if (mSubscriber == null) {
                 subscribeToStream(stream);
@@ -269,6 +277,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         // TODO: draw attention to the spinner
         mStreams.remove(stream);
+        mStreamArrayAdapter.notifyDataSetChanged();
 
         if (stream.getStreamId().equals(mSubscriber.getStream().getStreamId())) {
             mSubscriberContainer.removeView(mSubscriber.getView());
@@ -317,22 +326,23 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
     @Override
     public void onSubscriberConnected(Subscriber subscriber) {
-        Log.i(TAG, "subscriber connected.");
+        Log.i(TAG, "subscriber connected, stream id: " + subscriber.getStream().getStreamId());
     }
 
     @Override
     public void onSubscriberVideoDisabled(Subscriber subscriber) {
-        Log.i(TAG, "subscriber video disabled.");
+        Log.i(TAG, "subscriber video disabled, stream id: " + subscriber.getStream().getStreamId());
     }
 
     @Override
     public void onSubscriberException(Subscriber subscriber, OpentokException e) {
-        Log.e(TAG, "subscriber exception: " + e.getMessage());
+        Log.e(TAG, "subscriber exception: " + e.getMessage() + ", stream id: " + subscriber.getStream().getStreamId());
     }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         Log.i(TAG, "item selected in spinner.");
+        subscribeToStream(mStreams.get(i));
     }
 
     @Override
