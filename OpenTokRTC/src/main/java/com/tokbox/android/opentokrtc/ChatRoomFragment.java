@@ -212,6 +212,13 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
             return;
         }
 
+        // unsubscribe to any previous streams
+        if(mSubscriber != null) {
+            mSubscriberContainer.removeView(mSubscriber.getView());
+            mSession.unsubscribe(mSubscriber);
+            mSubscriber = null;
+        }
+
         Log.i(TAG, "subscribing to stream: " + stream.getStreamId());
         mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
         FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
