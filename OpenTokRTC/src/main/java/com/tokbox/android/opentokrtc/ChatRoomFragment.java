@@ -276,6 +276,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
             ((GLSurfaceView)mPublisher.getView()).setZOrderMediaOverlay(true);
             ((GLSurfaceView)mPublisher.getView()).setPreserveEGLContextOnPause(true);
             mSession.publish(mPublisher);
+            // TODO: find out how to do this right, method is missing?
+            //mPublisher.setStyle("videoScale", "fill");
             mIsPublisherStreaming = false;
 
             FrameLayout publisherContainer = (FrameLayout) getView().findViewById(R.id.publisherContainer);
