@@ -69,6 +69,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         protected HttpClient mHttpClient;
         protected HttpGet mHttpGet;
+        protected boolean mDidCompleteSuccessfully;
 
         public GetRoomDataTask() {
             mHttpClient = new DefaultHttpClient();
@@ -89,8 +90,11 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
                 sessionId = roomJson.getString("sid");
                 token = roomJson.getString("token");
                 apiKey = roomJson.getString("apiKey");
+                mDidCompleteSuccessfully = true;
             } catch (Exception exception) {
                 Log.e(TAG, "could not get room data: " + exception.getMessage());
+                mDidCompleteSuccessfully = false;
+                return null;
             }
             return new Room(params[0], sessionId, token, apiKey);
         }
@@ -98,7 +102,14 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         @Override
         protected void onPostExecute(final Room result) {
             // TODO: it might be better to set up some kind of callback interface
-            setRoom(result);
+            if (mDidCompleteSuccessfully) {
+                setRoom(result);
+            } else {
+                mConnectingDialog.dismiss();
+                mConnectingDialog = null;
+
+                // TODO: show failure dialog
+            }
         }
 
         protected void initializeGetRequest(String room) {
@@ -238,6 +249,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         Log.i(TAG, "leaveRoom");
         // TODO: make sure this method is called before the activity goes away
         mSession.disconnect();
+
     }
 
     /**
