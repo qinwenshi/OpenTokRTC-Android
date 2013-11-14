@@ -58,6 +58,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     protected FrameLayout mSubscriberContainer;
     protected FrameLayout mPublisherContainer;
     protected Spinner mStreamSpinner;
+    protected ViewGroup mStreamSelectionContainer;
 
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
@@ -154,6 +155,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         mStreamSpinner = (Spinner) rootView.findViewById(R.id.streamSelectionSpinner);
         mStreamSpinner.setAdapter(mStreamArrayAdapter);
         mStreamSpinner.setOnItemSelectedListener(this);
+        mStreamSelectionContainer = (ViewGroup) rootView.findViewById(R.id.streamSelectionContainer);
 
         // If we already have a publisher or a subscriber view add them
         // this happens after a rotation
@@ -298,6 +300,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
             mSubscriberContainer.removeView(mSubscriber.getView());
         }
 
+        // TODO: let the user know we disconnected and go back
+
         mPublisher = null;
         mIsPublisherStreaming = false;
         mSubscriber = null;
@@ -312,9 +316,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         if (mPublisher != null && ((!mIsPublisherStreaming) || (mIsPublisherStreaming && !mPublisher.getStreamId().equals(stream.getStreamId())))) {
 
-            // TODO: draw attention to the spinner
-            mStreams.add(stream);
-            mStreamArrayAdapter.notifyDataSetChanged();
+            addStreamToSelections(stream);
 
             if (mSubscriber == null) {
                 subscribeToStream(stream);
@@ -326,9 +328,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     public void onSessionDroppedStream(Stream stream) {
         Log.i(TAG, "stream dropped: " + stream.getStreamId());
 
-        // TODO: draw attention to the spinner
-        mStreams.remove(stream);
-        mStreamArrayAdapter.notifyDataSetChanged();
+        removeStreamFromSelections(stream);
 
         if (stream.getStreamId().equals(mSubscriber.getStream().getStreamId())) {
             mSubscriberContainer.removeView(mSubscriber.getView());
@@ -399,5 +399,29 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
         Log.i(TAG, "nothing selected in spinner.");
+    }
+
+    private void addStreamToSelections(Stream stream) {
+        // TODO: draw attention to the spinner
+        mStreams.add(stream);
+        mStreamArrayAdapter.notifyDataSetChanged();
+        layoutStreamSelectionChanges();
+    }
+
+    private void removeStreamFromSelections(Stream stream) {
+        // TODO: draw attention to the spinner
+        mStreams.remove(stream);
+        mStreamArrayAdapter.notifyDataSetChanged();
+        layoutStreamSelectionChanges();
+    }
+
+    private void layoutStreamSelectionChanges() {
+        if (mStreams.size() > 1) {
+            Log.i(TAG, "setting stream selection container to visible, size: " + mStreams.size());
+            mStreamSelectionContainer.setVisibility(View.VISIBLE);
+        } else {
+            Log.i(TAG, "setting stream selection container to gone, size: " + mStreams.size());
+            mStreamSelectionContainer.setVisibility(View.GONE);
+        }
     }
 }

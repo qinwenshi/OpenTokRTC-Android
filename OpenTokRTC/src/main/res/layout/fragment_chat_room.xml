@@ -26,10 +26,11 @@
             android:layout_weight="1" />
 
 
-        <LinearLayout
+        <LinearLayout android:id="@+id/streamSelectionContainer"
             android:layout_height="wrap_content"
             android:layout_width="fill_parent"
-            android:layout_toEndOf="@id/subscriberContainer" >
+            android:layout_toEndOf="@id/subscriberContainer"
+            android:visibility="gone">
 
             <TextView
                 android:layout_height="fill_parent"
