@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_width="0dip"
             android:layout_weight="1"
-            android:hint="@string/input_room_name_hint"/>
+            android:hint="@string/input_room_name_hint" />
 
         <Button android:id="@+id/button_join_room"
             android:layout_height="wrap_content"
@@ -34,6 +34,7 @@
         android:layout_width="fill_parent"
         android:text="@string/room_selection_intro"
         android:layout_above="@id/inputArea"
+        style="@style/AppTheme.TitleText"
         />
 
 
