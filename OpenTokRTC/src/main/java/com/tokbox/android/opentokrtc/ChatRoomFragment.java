@@ -2,6 +2,7 @@ package com.tokbox.android.opentokrtc;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.ProgressDialog;
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -59,6 +60,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     protected FrameLayout mPublisherContainer;
     protected Spinner mStreamSpinner;
     protected ViewGroup mStreamSelectionContainer;
+    protected ProgressDialog mConnectingDialog;
 
     private class GetRoomDataTask extends AsyncTask<String, Void, Room> {
 
@@ -244,6 +246,14 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         getActivity().setTitle(mRoomName);
         GetRoomDataTask task = new GetRoomDataTask();
         task.execute(mRoomName);
+
+        // show connecting dialog
+        mConnectingDialog = new ProgressDialog(getActivity());
+        mConnectingDialog.setTitle("Joining Room...");
+        mConnectingDialog.setMessage("Please wait.");
+        mConnectingDialog.setCancelable(false);
+        mConnectingDialog.setIndeterminate(true);
+        mConnectingDialog.show();
     }
 
     private void subscribeToStream(Stream stream) {
@@ -272,6 +282,10 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onSessionConnected() {
         Log.i(TAG, "session connected.");
+
+        // dismiss connecting dialog
+        mConnectingDialog.dismiss();
+        mConnectingDialog = null;
 
         if (mPublisher == null) {
             mPublisher = Publisher.newInstance(getActivity(), this, null);
