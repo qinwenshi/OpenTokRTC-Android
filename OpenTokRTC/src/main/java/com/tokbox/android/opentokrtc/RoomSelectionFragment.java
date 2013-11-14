@@ -2,6 +2,7 @@ package com.tokbox.android.opentokrtc;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 /**
  * Created by ankur on 11/9/13.
@@ -35,6 +37,10 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
 
         Button joinRoomButton = (Button) rootView.findViewById(R.id.button_join_room);
         joinRoomButton.setOnClickListener(this);
+
+        Typeface avantGarde = Typeface.createFromAsset(getActivity().getAssets(), "fonts/Avant+Garde+Book+BT.ttf");
+        TextView introText = (TextView) rootView.findViewById(R.id.introText);
+        introText.setTypeface(avantGarde);
 
         return rootView;
     }
