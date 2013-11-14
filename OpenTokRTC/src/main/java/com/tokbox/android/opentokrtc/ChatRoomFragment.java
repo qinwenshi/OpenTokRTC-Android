@@ -170,6 +170,8 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
             publisherContainer.addView(mPublisher.getView());
         }
 
+        layoutStreamSelectionChanges();
+
         return rootView;
     }
 
@@ -314,7 +316,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
             mSubscriberContainer.removeView(mSubscriber.getView());
         }
 
-        // TODO: let the user know we disconnected and go back
+        // TODO: let the user know we disconnected and go back, pre-populate the text box with the current room name
 
         mPublisher = null;
         mIsPublisherStreaming = false;
