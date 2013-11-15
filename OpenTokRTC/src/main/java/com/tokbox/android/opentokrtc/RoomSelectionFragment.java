@@ -35,12 +35,16 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_room_selection, container, false);
 
-        Button joinRoomButton = (Button) rootView.findViewById(R.id.button_join_room);
-        joinRoomButton.setOnClickListener(this);
-
         Typeface avantGarde = Typeface.createFromAsset(getActivity().getAssets(), "fonts/Avant+Garde+Book+BT.ttf");
         TextView introText = (TextView) rootView.findViewById(R.id.introText);
         introText.setTypeface(avantGarde);
+
+        Button joinRoomButton = (Button) rootView.findViewById(R.id.button_join_room);
+        joinRoomButton.setOnClickListener(this);
+        joinRoomButton.setTypeface(avantGarde);
+
+        EditText roomName = (EditText) rootView.findViewById(R.id.input_room_name);
+        roomName.setTypeface(avantGarde);
 
         return rootView;
     }
