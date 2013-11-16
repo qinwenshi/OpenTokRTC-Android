@@ -3,6 +3,8 @@ package com.tokbox.android.opentokrtc;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.media.AudioManager;
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -37,6 +39,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by ankur on 11/10/13.
@@ -53,6 +56,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     protected Publisher mPublisher;
     protected boolean mIsPublisherStreaming;
     protected Subscriber mSubscriber;
+    protected HashMap<Stream, Subscriber> mActiveSubscribers;
     protected ArrayList<Stream> mStreams;
     protected ArrayAdapter<Stream> mStreamArrayAdapter;
 
@@ -152,9 +156,12 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         setRoomName(roomName);
 
         mStreams = new ArrayList<Stream>();
+        mActiveSubscribers = new HashMap<Stream, Subscriber>();
+
         mStreamArrayAdapter = new ArrayAdapter<Stream>(getActivity(), android.R.layout.simple_spinner_item, mStreams);
         mStreamArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mIsPublisherStreaming = false;
+
     }
 
     @Override
@@ -270,30 +277,56 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
         mConnectingDialog.show();
     }
 
-    private void subscribeToStream(Stream stream) {
-        // check to see if we are already subscribing to this stream
-        if (mSubscriber != null && mSubscriber.getStream().getStreamId().equals(stream.getStreamId())) {
-            return;
-        }
+    private void subscribeToStream(Stream stream, boolean presentVideo) {
 
-        // unsubscribe to any previous streams
-        if(mSubscriber != null) {
+        Log.i(TAG, "subscribing to stream: " + stream.getStreamId() + " withVideo:" + presentVideo);
+
+        // if we want to present a new one remove any previous subscriber view
+        if(presentVideo && mSubscriber != null) {
             mSubscriberContainer.removeView(mSubscriber.getView());
-            mSession.unsubscribe(mSubscriber);
+            mSubscriber.setSubscribeToVideo(false);
             mSubscriber = null;
         }
 
-        Log.i(TAG, "subscribing to stream: " + stream.getStreamId());
-        mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
-        ((GLSurfaceView)mSubscriber.getView()).setPreserveEGLContextOnPause(true);
-        FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
-        subscriberContainer.removeAllViews();
-        subscriberContainer.addView(mSubscriber.getView());
-        mSession.subscribe(mSubscriber);
-        mStreamSpinner.setSelection(mStreams.indexOf(stream));
+        Subscriber subscriber  = mActiveSubscribers.get(stream);
+        if(subscriber == null) {
+            subscriber = Subscriber.newInstance(getActivity(), stream, this);
+            //subscriber.setStyle("videoScale", "fill");
+            ((GLSurfaceView)subscriber.getView()).setPreserveEGLContextOnPause(true);
+
+            mActiveSubscribers.put(stream, subscriber);
+            mSession.subscribe(subscriber);
+            subscriber.setSubscribeToVideo(false);
+
+        } else {
+            subscriber.setSubscribeToVideo(presentVideo);
+        }
+
+        if(presentVideo) {
+            mSubscriber = subscriber;
+            mSubscriberContainer.addView(mSubscriber.getView());
+            mStreamSpinner.setSelection(mStreams.indexOf(stream));
+        }
+
     }
 
-    @Override
+    private void unsubscribeToStream(Stream stream) {
+        Subscriber subscriber = mActiveSubscribers.get(stream);
+
+        if(subscriber != null) {
+            if(mSubscriber == subscriber) {
+                // this is the video subscriber
+                mSubscriberContainer.removeView(mSubscriber.getView());
+                mSubscriber = null;
+            }
+
+            mSession.unsubscribe(subscriber);
+            mActiveSubscribers.remove(stream);
+        }
+    }
+
+
+        @Override
     public void onSessionConnected() {
         Log.i(TAG, "session connected.");
 
@@ -303,6 +336,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         if (mPublisher == null) {
             mPublisher = Publisher.newInstance(getActivity(), this, null);
+            //mPublisher.setStyle("videoScale", "fill");
             ((GLSurfaceView)mPublisher.getView()).setZOrderMediaOverlay(true);
             ((GLSurfaceView)mPublisher.getView()).setPreserveEGLContextOnPause(true);
             mSession.publish(mPublisher);
@@ -346,9 +380,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
             addStreamToSelections(stream);
 
-            if (mSubscriber == null) {
-                subscribeToStream(stream);
-            }
+            subscribeToStream(stream, mSubscriber == null);
         }
     }
 
@@ -358,12 +390,10 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         removeStreamFromSelections(stream);
 
-        if (stream.getStreamId().equals(mSubscriber.getStream().getStreamId())) {
-            mSubscriberContainer.removeView(mSubscriber.getView());
-            mSubscriber = null;
-            if (!mStreams.isEmpty()) {
-                subscribeToStream(mStreams.get(0));
-            }
+        unsubscribeToStream(stream);
+
+        if (mSubscriber == null && !mStreams.isEmpty()) {
+            subscribeToStream(mStreams.get(0), true);
         }
     }
 
@@ -421,7 +451,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         Log.i(TAG, "item selected in spinner.");
-        subscribeToStream(mStreams.get(i));
+        subscribeToStream(mStreams.get(i), true);
     }
 
     @Override
