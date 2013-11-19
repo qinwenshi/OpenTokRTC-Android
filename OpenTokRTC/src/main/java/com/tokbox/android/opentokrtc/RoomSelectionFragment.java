@@ -31,6 +31,9 @@ public class RoomSelectionFragment extends Fragment implements View.OnClickListe
         }
     };
 
+    // TODO: disable join button when text field is blank
+    // TODO: make it more obvious that you can create a room by name as well
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_room_selection, container, false);

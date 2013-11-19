@@ -27,7 +27,8 @@
             android:layout_width="wrap_content"
             android:text="@string/button_join_room"
             android:layout_toEndOf="@id/input_room_name"
-            android:onClick="joinRoom"/>
+            android:onClick="joinRoom"
+            style="@style/AppTheme.Button"/>
 
     </LinearLayout>
 
@@ -36,8 +37,7 @@
         android:layout_width="fill_parent"
         android:text="@string/room_selection_intro"
         android:layout_above="@id/inputArea"
-        style="@style/AppTheme.TitleText"
-        />
+        style="@style/AppTheme.TitleText" />
 
 
 </RelativeLayout>
