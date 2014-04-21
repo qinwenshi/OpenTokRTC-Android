@@ -285,6 +285,7 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         Log.i(TAG, "subscribing to stream: " + stream.getStreamId());
         mSubscriber = Subscriber.newInstance(getActivity(), stream, this);
+        // NOTE: unofficial API
         mSubscriber.setStyle("videoScale", "fill");
         ((GLSurfaceView)mSubscriber.getView()).setPreserveEGLContextOnPause(true);
         FrameLayout subscriberContainer = (FrameLayout) getView().findViewById(R.id.subscriberContainer);
@@ -304,12 +305,11 @@ public class ChatRoomFragment extends Fragment implements Session.Listener, Publ
 
         if (mPublisher == null) {
             mPublisher = Publisher.newInstance(getActivity(), this, null);
+            // NOTE: unofficial API
             mPublisher.setStyle("videoScale", "fill");
             ((GLSurfaceView)mPublisher.getView()).setZOrderMediaOverlay(true);
             ((GLSurfaceView)mPublisher.getView()).setPreserveEGLContextOnPause(true);
             mSession.publish(mPublisher);
-            // TODO: find out how to do this right, method is missing?
-            //mPublisher.setStyle("videoScale", "fill");
             mIsPublisherStreaming = false;
 
             FrameLayout publisherContainer = (FrameLayout) getView().findViewById(R.id.publisherContainer);
