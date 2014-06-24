@@ -394,8 +394,8 @@ public class Room extends Session {
     
 
 	@Override
-	protected void onArchiveStarted() {
-		super.onArchiveStarted();
+	protected void onArchiveStarted(String id, String name) {
+		super.onArchiveStarted(id, name);
 		mHandler.postDelayed(new Runnable() {  
             @Override
             public void run() {
@@ -405,8 +405,8 @@ public class Room extends Session {
 	}
 
 	@Override
-	protected void onArchiveStopped() {
-		super.onArchiveStopped();		
+	protected void onArchiveStopped(String id) {
+		super.onArchiveStopped(id);		
 		mHandler.postDelayed(new Runnable() {  
             @Override
             public void run() {
