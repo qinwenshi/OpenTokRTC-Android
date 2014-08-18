@@ -57,7 +57,7 @@ public class ChatRoomActivity extends Activity implements
 	private static final int ANIMATION_DURATION = 500;   
 	public static final String ARG_ROOM_ID = "roomId";
 	public static final String ARG_USERNAME_ID = "usernameId";
-	private static final String URL = "http://opentokrtc.com/";
+	private String serverURL = null;
 	
 	private String mRoomName;
 	protected Room mRoom;
@@ -118,6 +118,8 @@ public class ChatRoomActivity extends Activity implements
 		mLoadingSub = (ProgressBar) findViewById(R.id.loadingSpinner);
 		
 		Uri url = getIntent().getData();
+		serverURL = getResources().getString(R.urls.serverURL);
+		
         if(url == null) {
             mRoomName = getIntent().getStringExtra(ARG_ROOM_ID);
             mUsername = getIntent().getStringExtra(ARG_USERNAME_ID);
@@ -365,7 +367,7 @@ public class ChatRoomActivity extends Activity implements
 	}
 
 	public void onClickShareLink(View v) {	
-		String roomUrl = URL + mRoomName;
+		String roomUrl = serverURL + mRoomName;
 		String text = getString(R.string.sharingLink) + " " + roomUrl;
 		Intent sendIntent = new Intent();
 		sendIntent.setAction(Intent.ACTION_SEND);
