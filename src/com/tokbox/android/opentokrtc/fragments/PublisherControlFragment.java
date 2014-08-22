@@ -153,7 +153,7 @@ public class PublisherControlFragment extends Fragment implements
     public void mutePublisher() {
         mCallbacks.onMutePublisher();
 
-        mPublisherMute.setImageResource(chatRoomActivity.getmRoom().getmPublisher()
+        mPublisherMute.setImageResource(chatRoomActivity.getRoom().getmPublisher()
                 .getPublishAudio() ? R.drawable.unmute_pub : R.drawable.mute_pub);
     }
 
@@ -163,7 +163,7 @@ public class PublisherControlFragment extends Fragment implements
                 mPublisherWidgetTimerTask);
     	chatRoomActivity.getmHandler().postDelayed(mPublisherWidgetTimerTask,
     			PUBLISHER_CONTROLS_DURATION);
-        mPublisherMute.setImageResource(chatRoomActivity.getmRoom().getmPublisher()
+        mPublisherMute.setImageResource(chatRoomActivity.getRoom().getmPublisher()
                 .getPublishAudio() ? R.drawable.unmute_pub : R.drawable.mute_pub);
     }
 
