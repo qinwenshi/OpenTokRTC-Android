@@ -353,9 +353,13 @@ public class ChatRoomActivity extends Activity implements
 		mErrorDialog.show();
 	}
 	
-	public void onClickSend(View v) {
-		mRoom.sendChatMessage(mMessageEditText.getText().toString());
-		mMessageEditText.setText("");
+	public void onClickSend(View v) {if(mMessageEditText.getText().toString().compareTo("") == 0){
+			Log.d("Send Message", "Cannot Send - Empty String");
+		}
+		else{
+			mRoom.sendChatMessage(mMessageEditText.getText().toString());
+			mMessageEditText.setText("");
+		}
 	}
 
 	public void onClickTextChat(View v) {
