@@ -225,6 +225,16 @@ public class ChatRoomActivity extends Activity implements
 	}
 	
 	@Override
+    public void onDestroy() {
+    	mNotificationManager.cancel(NOTIFICATION_ID);
+    	if (mRoom != null)  {
+    		mRoom.disconnect();
+    	}
+    	super.onDestroy();
+    	finish();
+    }
+	
+	@Override
 	public void onBackPressed() {
 		super.onBackPressed();
 		
