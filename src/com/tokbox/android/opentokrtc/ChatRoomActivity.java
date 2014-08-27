@@ -19,23 +19,26 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.animation.AlphaAnimation;
-import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -44,6 +47,7 @@ import android.widget.RelativeLayout.LayoutParams;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.tokbox.android.opentokrtc.ClearNotificationService.ClearBinder;
 import com.tokbox.android.opentokrtc.fragments.PublisherControlFragment;
 import com.tokbox.android.opentokrtc.fragments.PublisherStatusFragment;
 import com.tokbox.android.opentokrtc.fragments.SubscriberControlFragment;
@@ -52,7 +56,7 @@ public class ChatRoomActivity extends Activity implements
 		SubscriberControlFragment.SubscriberCallbacks,
 		PublisherControlFragment.PublisherCallbacks {
 
-	private static final int NOTIFICATION_ID = 1;
+
 	private static final String LOGTAG = "ChatRoomActivity";
 	private static final int ANIMATION_DURATION = 500;   
 	public static final String ARG_ROOM_ID = "roomId";
@@ -86,7 +90,9 @@ public class ChatRoomActivity extends Activity implements
 
 	private NotificationCompat.Builder mNotifyBuilder;
 	NotificationManager mNotificationManager;
-
+	ServiceConnection mConnection;
+	boolean mIsBound = false;
+	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 	
@@ -177,56 +183,84 @@ public class ChatRoomActivity extends Activity implements
 			}
 		}
 		
-		//Add notification to status bar
+		//Add notification to status bar which gets removed if the user force kills the application.
 		mNotifyBuilder = new NotificationCompat.Builder(this)
-        .setContentTitle("OpenTokRTC")
-        .setContentText("Ongoing call")
-        .setSmallIcon(R.drawable.ic_launcher).setOngoing(true);
-        
+		.setContentTitle("OpenTokRTC")
+		.setContentText("Ongoing call")
+		.setSmallIcon(R.drawable.ic_launcher).setOngoing(true);
+
 		Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
-	    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-	    notificationIntent.putExtra(ChatRoomActivity.ARG_ROOM_ID, mRoomName);
-	    PendingIntent intent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		notificationIntent.putExtra(ChatRoomActivity.ARG_ROOM_ID, mRoomName);
+		PendingIntent intent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		mNotifyBuilder.setContentIntent(intent);
 	    
-	    mNotifyBuilder.setContentIntent(intent);
-		mNotificationManager.notify(
-                NOTIFICATION_ID,
-                mNotifyBuilder.build());
+	    //Creates a service which removes the notification after application is forced closed.
+		if(mConnection == null){
+			mConnection = new ServiceConnection() {
+
+				public void onServiceConnected(ComponentName className,IBinder binder) {
+					((ClearBinder) binder).service.startService(new Intent(ChatRoomActivity.this, ClearNotificationService.class));
+					NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+					mNotificationManager.notify(ClearNotificationService.NOTIFICATION_ID,
+							mNotifyBuilder.build());
+				}
+
+				public void onServiceDisconnected(ComponentName className) {
+					mConnection = null;
+				}
+
+			};
+		}
+		if(!mIsBound){
+			bindService(new Intent(ChatRoomActivity.this,
+					ClearNotificationService.class), mConnection,
+					Context.BIND_AUTO_CREATE);
+			mIsBound = true;
+			startService(new Intent(ClearNotificationService.MY_SERVICE));
+		}
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-
+		super.onResume();
 		//Resume implies restore video mode if it was enable before pausing app
+
+		//If service is binded remove it, so that the next time onPause can bind service.
+		if(mIsBound){
+			unbindService(mConnection);
+			stopService(new Intent(ClearNotificationService.MY_SERVICE));
+			mIsBound = false;
+		}
+
 		if (mRoom != null) {
 			mRoom.onResume();
 		}
 
-		mNotificationManager.cancel(NOTIFICATION_ID);
-
-        if (mRoom != null) {
-        	mRoom.onResume();
-        }
-        
-        reloadInterface();
+		mNotificationManager.cancel(ClearNotificationService.NOTIFICATION_ID);
+		reloadInterface();
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
+		if(mIsBound){
+			unbindService(mConnection);
+			mIsBound = false;
+		}
 
 		if(this.isFinishing()) {
-	        mNotificationManager.cancel(NOTIFICATION_ID); 
-            if (mRoom != null) {
-            	mRoom.disconnect();
-            }
-        }
+			mNotificationManager.cancel(ClearNotificationService.NOTIFICATION_ID);
+			if (mRoom != null) {
+				mRoom.disconnect();
+			}
+		}
 	}
 	
 	@Override
     public void onDestroy() {
-    	mNotificationManager.cancel(NOTIFICATION_ID);
+    	mNotificationManager.cancel(ClearNotificationService.NOTIFICATION_ID);
     	if (mRoom != null)  {
     		mRoom.disconnect();
     	}
