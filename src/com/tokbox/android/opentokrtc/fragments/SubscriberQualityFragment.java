@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 
 public class SubscriberQualityFragment extends Fragment  {
 	

@@ -97,7 +97,7 @@ public class Room extends Session {
 						p.setSubscribeToVideo(true);
 					}
 					if(p.getmSubscriberVideoOnly()) {
-						mActivity.setAudioOnlyView(true);
+						mActivity.setAudioOnlyView(true, p);
 					}
 				} else {
 					if (p.getSubscribeToVideo()) {
@@ -277,8 +277,8 @@ public class Room extends Session {
 		mHandler.postDelayed(new Runnable() {	  
             @Override
             public void run() {
-            	mActivity.getPublisherFragment().showPublisherWidget(true);
-            	mActivity.getPublisherFragment().initPublisherUI();
+            	mActivity.mPublisherFragment.showPublisherWidget(true);
+            	mActivity.mPublisherFragment.initPublisherUI();
             }
         }, 0);	
 		
@@ -325,6 +325,7 @@ public class Room extends Session {
 			presentText("\n" + p.getmName() + " has left the chat");
 			mActivity.showArrowsOnSubscriber();
 			mActivity.mSubscriberFragment.showSubscriberWidget(false);
+			mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
 		}
 		
 	}

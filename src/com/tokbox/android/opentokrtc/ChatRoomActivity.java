@@ -19,24 +19,28 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.animation.AlphaAnimation;
-import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -46,17 +50,19 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.opentok.android.SubscriberKit;
-import com.tokbox.android.opentokrtc.fragments.SubscriberQualityFragment;
 import com.tokbox.android.opentokrtc.fragments.PublisherControlFragment;
 import com.tokbox.android.opentokrtc.fragments.PublisherStatusFragment;
 import com.tokbox.android.opentokrtc.fragments.SubscriberControlFragment;
+import com.tokbox.android.opentokrtc.fragments.SubscriberQualityFragment;
+import com.tokbox.android.opentokrtc.services.ClearNotificationService;
+import com.tokbox.android.opentokrtc.services.ClearNotificationService.ClearBinder;
 import com.tokbox.android.ui.AudioLevelView;
 
 public class ChatRoomActivity extends Activity implements
 		SubscriberControlFragment.SubscriberCallbacks,
 		PublisherControlFragment.PublisherCallbacks {
 
-	private static final int NOTIFICATION_ID = 1;
+
 	private static final String LOGTAG = "ChatRoomActivity";
 	private static final int ANIMATION_DURATION = 500;   
 	public static final String ARG_ROOM_ID = "roomId";
@@ -93,7 +99,9 @@ public class ChatRoomActivity extends Activity implements
 
 	private NotificationCompat.Builder mNotifyBuilder;
 	NotificationManager mNotificationManager;
-
+	ServiceConnection mConnection;
+	boolean mIsBound = false;
+	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 	
@@ -190,70 +198,108 @@ public class ChatRoomActivity extends Activity implements
 			}
 		}
 		
-		//Add notification to status bar
+		//Add notification to status bar which gets removed if the user force kills the application.
 		mNotifyBuilder = new NotificationCompat.Builder(this)
-        .setContentTitle("OpenTokRTC")
-        .setContentText("Ongoing call")
-        .setSmallIcon(R.drawable.ic_launcher).setOngoing(true);
-        
+		.setContentTitle("OpenTokRTC")
+		.setContentText("Ongoing call")
+		.setSmallIcon(R.drawable.ic_launcher).setOngoing(true);
+
 		Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
-	    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-	    notificationIntent.putExtra(ChatRoomActivity.ARG_ROOM_ID, mRoomName);
-	    PendingIntent intent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		notificationIntent.putExtra(ChatRoomActivity.ARG_ROOM_ID, mRoomName);
+		PendingIntent intent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		mNotifyBuilder.setContentIntent(intent);
 	    
-	    mNotifyBuilder.setContentIntent(intent);
-		mNotificationManager.notify(
-                NOTIFICATION_ID,
-                mNotifyBuilder.build());
+	    //Creates a service which removes the notification after application is forced closed.
+		if(mConnection == null){
+			mConnection = new ServiceConnection() {
+
+				public void onServiceConnected(ComponentName className,IBinder binder) {
+					((ClearBinder) binder).service.startService(new Intent(ChatRoomActivity.this, ClearNotificationService.class));
+					NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+					mNotificationManager.notify(ClearNotificationService.NOTIFICATION_ID,
+							mNotifyBuilder.build());
+				}
+
+				public void onServiceDisconnected(ComponentName className) {
+					mConnection = null;
+				}
+
+			};
+		}
+		if(!mIsBound){
+			bindService(new Intent(ChatRoomActivity.this,
+					ClearNotificationService.class), mConnection,
+					Context.BIND_AUTO_CREATE);
+			mIsBound = true;
+			startService(new Intent(ClearNotificationService.MY_SERVICE));
+		}
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-
+		super.onResume();
 		//Resume implies restore video mode if it was enable before pausing app
+
+		//If service is binded remove it, so that the next time onPause can bind service.
+		if(mIsBound){
+			unbindService(mConnection);
+			stopService(new Intent(ClearNotificationService.MY_SERVICE));
+			mIsBound = false;
+		}
+
 		if (mRoom != null) {
 			mRoom.onResume();
 		}
 
-		mNotificationManager.cancel(NOTIFICATION_ID);
-
-        if (mRoom != null) {
-        	mRoom.onResume();
-        }
-        
-        reloadInterface();
+		mNotificationManager.cancel(ClearNotificationService.NOTIFICATION_ID);
+		reloadInterface();
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
+		if(mIsBound){
+			unbindService(mConnection);
+			mIsBound = false;
+		}
 
 		if(this.isFinishing()) {
-	        mNotificationManager.cancel(NOTIFICATION_ID); 
-            if (mRoom != null) {
-            	mRoom.disconnect();
-            }
-        }
+			mNotificationManager.cancel(ClearNotificationService.NOTIFICATION_ID);
+			if (mRoom != null) {
+				mRoom.disconnect();
+			}
+		}
 	}
 	
 	@Override
     public void onDestroy() {
-    	mNotificationManager.cancel(NOTIFICATION_ID);
+    	mNotificationManager.cancel(ClearNotificationService.NOTIFICATION_ID);
+    	
+    	if(mIsBound){
+			unbindService(mConnection);
+			mIsBound = false;
+		}
+    	
     	if (mRoom != null)  {
     		mRoom.disconnect();
     	}
+    	restartAudioMode();
+    	
     	super.onDestroy();
     	finish();
     }
 	
 	@Override
 	public void onBackPressed() {
-		super.onBackPressed();
-		
+
 		if (mRoom != null) {
 			mRoom.disconnect();
 		}
+		restartAudioMode();
+
+		super.onBackPressed();
 	}
 	
 	public void reloadInterface() {
@@ -267,6 +313,12 @@ public class ChatRoomActivity extends Activity implements
 		}, 500);
 	}
 	
+	public void restartAudioMode() {
+		AudioManager Audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		Audio.setMode(AudioManager.MODE_NORMAL);
+		this.setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);
+	}
+ 
 	private void initializeRoom() {
 		Log.i(LOGTAG, "initializing chat room fragment for room: " + mRoomName);
 		setTitle(mRoomName);
@@ -450,14 +502,6 @@ public class ChatRoomActivity extends Activity implements
 		this.mHandler = mHandler;
 	}
 	
-	public PublisherControlFragment getPublisherFragment() {
-		return mPublisherFragment;
-	}
-	
-	public SubscriberQualityFragment getSubscriberQualityFragment() {
-		return mSubscriberQualityFragment;
-	}
-
 	public ProgressBar getLoadingSub() {
 		return mLoadingSub;
 	}
@@ -514,16 +558,16 @@ public class ChatRoomActivity extends Activity implements
 		RelativeLayout.LayoutParams params = (LayoutParams) mPreview
 				.getLayoutParams();
 		RelativeLayout.LayoutParams pubControlLayoutParams = (LayoutParams) mPublisherFragment
-				.getmPublisherContainer().getLayoutParams();
+				.getPublisherContainer().getLayoutParams();
 		RelativeLayout.LayoutParams pubStatusLayoutParams = (LayoutParams) mPublisherStatusFragment
-				.getMPubStatusContainer().getLayoutParams();
+				.getPubStatusContainer().getLayoutParams();
 
-		if (mPublisherFragment.ismPublisherWidgetVisible() && mArchiving) {
+		if (mPublisherFragment.isPublisherWidgetVisible() && mArchiving) {
 			bottomMargin = pubControlLayoutParams.height
 					+ pubStatusLayoutParams.height + dpToPx(20);
 		}
 		else {
-			if (mPublisherFragment.ismPublisherWidgetVisible()) {
+			if (mPublisherFragment.isPublisherWidgetVisible()) {
 				bottomMargin = pubControlLayoutParams.height + dpToPx(20);
 			} else {	
 				params.addRule(RelativeLayout.ALIGN_BOTTOM);
@@ -542,13 +586,13 @@ public class ChatRoomActivity extends Activity implements
 			RelativeLayout.LayoutParams subQualityLayoutParams = (LayoutParams) mSubscriberQualityFragment
 					.getSubQualityContainer().getLayoutParams();
 			boolean pubControlBarVisible = mPublisherFragment
-					.ismPublisherWidgetVisible();
+					.isPublisherWidgetVisible();
 			boolean pubStatusBarVisible = mPublisherStatusFragment
-					.ismPubStatusWidgetVisible();
+					.isPubStatusWidgetVisible();
 			RelativeLayout.LayoutParams pubControlLayoutParams = (LayoutParams) mPublisherFragment
-					.getmPublisherContainer().getLayoutParams();
+					.getPublisherContainer().getLayoutParams();
 			RelativeLayout.LayoutParams pubStatusLayoutParams = (LayoutParams) mPublisherStatusFragment
-					.getMPubStatusContainer().getLayoutParams();
+					.getPubStatusContainer().getLayoutParams();
 
 			int bottomMargin = 0;
 
@@ -580,7 +624,7 @@ public class ChatRoomActivity extends Activity implements
  
         	if (mRoom.getmPublisher() != null) {
         		 // check visibility of bars
-            	if (!mPublisherFragment.ismPublisherWidgetVisible()) {
+            	if (!mPublisherFragment.isPublisherWidgetVisible()) {
             		visible = true;
             	}
 				mPublisherFragment.publisherClick();
@@ -588,9 +632,11 @@ public class ChatRoomActivity extends Activity implements
 					mPublisherStatusFragment.publisherClick();
 				}
                 setPublisherMargins();
-            	if (mRoom.getmCurrentParticipant() != null) {
+            	
+                if (mRoom.getmCurrentParticipant() != null) {
             		mSubscriberFragment.showSubscriberWidget(visible);
             		mSubscriberFragment.initSubscriberUI();
+            		showArrowsOnSubscriber();	
                 }
         	}
         }
@@ -650,11 +696,11 @@ public class ChatRoomActivity extends Activity implements
 	}
 	
 	//Show audio only icon when video quality changed and it is disabled for the subscriber
-	public void setAudioOnlyView(boolean audioOnlyEnabled) {
+	public void setAudioOnlyView(boolean audioOnlyEnabled, Participant participant) {
 		mSubscriberVideoOnly = audioOnlyEnabled;
 
 		if (audioOnlyEnabled) {
-			mRoom.getmCurrentParticipant().getView().setVisibility(View.GONE);
+			participant.getView().setVisibility(View.GONE);
 			mSubscriberAudioOnlyView.setVisibility(View.VISIBLE);
 			mSubscriberAudioOnlyView.setOnClickListener(onViewClick);
 
@@ -665,7 +711,7 @@ public class ChatRoomActivity extends Activity implements
 			aa.setDuration(ANIMATION_DURATION);
 			subStatusText.startAnimation(aa);
 			
-			mRoom.getmCurrentParticipant()
+			participant
 				.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
 					@Override
 					public void onAudioLevelUpdated(
@@ -675,7 +721,7 @@ public class ChatRoomActivity extends Activity implements
 				}); 
 		} else {
 			if (!mSubscriberVideoOnly) {
-				mRoom.getmCurrentParticipant().getView().setVisibility(View.VISIBLE);
+				participant.getView().setVisibility(View.VISIBLE);
 				mSubscriberAudioOnlyView.setVisibility(View.GONE);
 			}
 		}

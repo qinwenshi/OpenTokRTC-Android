@@ -20,7 +20,6 @@ public class Participant extends Subscriber {
     private Context mContext;
     protected Boolean mSubscriberVideoOnly = false;
     private ChatRoomActivity mActivity;
-    private CongestionLevel congestion = CongestionLevel.Low;
     
 	public Participant(Context context, Stream stream) {
         super(context, stream);
@@ -54,15 +53,14 @@ public class Participant extends Subscriber {
     @Override
     public void onVideoDisabled(String reason) {
     	super.onVideoDisabled(reason);
-    	Log.i(LOGTAG, "Video is disabled for the subscriber");
-        mSubscriberVideoOnly = true;
-    	mActivity.setAudioOnlyView(true);
-        
-        if (reason.equals("quality")) {
-        	mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.High);
-        	congestion = CongestionLevel.High;
+    	Log.i(LOGTAG, "Video is disabled for the subscriber. Reason: "+reason);
+    	if (reason.equals("quality")) {
+        	mSubscriberVideoOnly = true;
+        	mActivity.setAudioOnlyView(true, this);
+         
+        	mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.High);
         	mActivity.setSubQualityMargins();
-        	mActivity.getSubscriberQualityFragment().showSubscriberWidget(true);
+        	mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
         }
     }
 
@@ -70,32 +68,30 @@ public class Participant extends Subscriber {
     public void onVideoEnabled(String reason) {
         super.onVideoEnabled(reason);
     	Log.i(LOGTAG, "Subscriber is enabled:" + reason);
-       
-    	mSubscriberVideoOnly = false;
-    	mActivity.setAudioOnlyView(false);
-       
+    	
     	if (reason.equals("quality")) {
-    		mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.Low);
-        	congestion = CongestionLevel.Low;
-        	mActivity.getSubscriberQualityFragment().showSubscriberWidget(false);
+
+        	mSubscriberVideoOnly = false;
+        	mActivity.setAudioOnlyView(false, this);
+           
+    		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
+        	mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
         } 
     }
 
     @Override
    	public void onVideoDisableWarning() {
    		Log.i(LOGTAG, "Video may be disabled soon due to network quality degradation. Add UI handling here.");	
-   		mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.Mid);
-   		congestion = CongestionLevel.Mid;
+   		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Mid);
    		mActivity.setSubQualityMargins();
-   		mActivity.getSubscriberQualityFragment().showSubscriberWidget(true);
+   		mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
    	}
 
    	@Override
    	public void onVideoDisableWarningLifted() {
    		Log.i(LOGTAG, "Video may no longer be disabled as stream quality improved. Add UI handling here.");
-   		mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.Low);
-   		congestion = CongestionLevel.Low;
-   		mActivity.getSubscriberQualityFragment().showSubscriberWidget(false);
+   		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
+   		mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
    	}
 
 	@Override
@@ -103,15 +99,6 @@ public class Participant extends Subscriber {
 		super.onVideoDataReceived();
 		Log.i(LOGTAG, "First frame received");
 		mActivity.updateLoadingSub();
-		
-		//marinas
-		mSubscriberVideoOnly = true;
-    	mActivity.setAudioOnlyView(true);
-    	mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.High);
-    	congestion = CongestionLevel.High;
-    	mActivity.setSubQualityMargins();
-    	mActivity.getSubscriberQualityFragment().showSubscriberWidget(true);
-        
 	}
 
 	@Override
