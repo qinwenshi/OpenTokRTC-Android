@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -44,9 +45,12 @@ import android.widget.RelativeLayout.LayoutParams;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.opentok.android.SubscriberKit;
+import com.tokbox.android.opentokrtc.fragments.SubscriberQualityFragment;
 import com.tokbox.android.opentokrtc.fragments.PublisherControlFragment;
 import com.tokbox.android.opentokrtc.fragments.PublisherStatusFragment;
 import com.tokbox.android.opentokrtc.fragments.SubscriberControlFragment;
+import com.tokbox.android.ui.AudioLevelView;
 
 public class ChatRoomActivity extends Activity implements
 		SubscriberControlFragment.SubscriberCallbacks,
@@ -81,7 +85,10 @@ public class ChatRoomActivity extends Activity implements
 	protected SubscriberControlFragment mSubscriberFragment;
 	protected PublisherControlFragment mPublisherFragment;
 	protected PublisherStatusFragment mPublisherStatusFragment;
+	protected SubscriberQualityFragment mSubscriberQualityFragment;
 	
+	private AudioLevelView mAudioLevelView;
+	 
 	protected Handler mHandler = new Handler();
 
 	private NotificationCompat.Builder mNotifyBuilder;
@@ -117,6 +124,11 @@ public class ChatRoomActivity extends Activity implements
 		mSubscriberAudioOnlyView = (RelativeLayout) findViewById(R.id.audioOnlyView);
 		mLoadingSub = (ProgressBar) findViewById(R.id.loadingSpinner);
 		
+		 //Initialize 
+        mAudioLevelView = (AudioLevelView)findViewById(R.id.subscribermeter);
+        mAudioLevelView.setIcons(BitmapFactory.decodeResource(getResources(),
+     					R.drawable.headset));
+       
 		Uri url = getIntent().getData();
 		serverURL = getResources().getString(R.urls.serverURL);
 		
@@ -134,6 +146,7 @@ public class ChatRoomActivity extends Activity implements
 			initSubscriberFragment();
 			initPublisherFragment();
 			initPublisherStatusFragment();
+			initSubscriberQualityFragment();
 		}
 	      
         mNotificationManager =
@@ -311,9 +324,9 @@ public class ChatRoomActivity extends Activity implements
 			if (mDidCompleteSuccessfully) {
 				mConnectingDialog.dismiss();
 				mRoom = room;
-				mPreview.setOnClickListener(onPublisherUIClick);
+				mPreview.setOnClickListener(onViewClick);
 				mRoom.setPreviewView(mPreview);
-				mRoom.setParticipantsViewContainer(mParticipantsView, onSubscriberUIClick);
+				mRoom.setParticipantsViewContainer(mParticipantsView, onViewClick);
 				mRoom.setMessageView((TextView) findViewById(R.id.messageView),
 						(ScrollView) findViewById(R.id.scroller));
 				mRoom.connect();
@@ -393,7 +406,7 @@ public class ChatRoomActivity extends Activity implements
 	public void onPublisherViewClick(View v) {
 		if (mRoom != null && mRoom.getmCurrentParticipant() != null) {
 			mRoom.getmCurrentParticipant().getView()
-					.setOnClickListener(onPublisherUIClick);
+					.setOnClickListener(onViewClick);
 		}
 	}
 	
@@ -416,7 +429,15 @@ public class ChatRoomActivity extends Activity implements
 		getFragmentManager().beginTransaction()
 				.add(R.id.fragment_sub_container, mSubscriberFragment).commit();
 	}
-
+	
+	public void initSubscriberQualityFragment() {
+		 mSubscriberQualityFragment = new SubscriberQualityFragment();
+         getFragmentManager()
+                 .beginTransaction()
+                 .add(R.id.fragment_sub_quality_container,
+                		 mSubscriberQualityFragment).commit();
+	}
+	
 	public Room getmRoom() {
 		return mRoom;
 	}
@@ -429,11 +450,15 @@ public class ChatRoomActivity extends Activity implements
 		this.mHandler = mHandler;
 	}
 	
-	public PublisherControlFragment getmPublisherFragment() {
+	public PublisherControlFragment getPublisherFragment() {
 		return mPublisherFragment;
 	}
+	
+	public SubscriberQualityFragment getSubscriberQualityFragment() {
+		return mSubscriberQualityFragment;
+	}
 
-	public ProgressBar getmLoadingSub() {
+	public ProgressBar getLoadingSub() {
 		return mLoadingSub;
 	}
 	
@@ -508,42 +533,68 @@ public class ChatRoomActivity extends Activity implements
 		params.bottomMargin = bottomMargin;
 		params.leftMargin = dpToPx(20);
 		mPreview.setLayoutParams(params);
+		
+		setSubQualityMargins();
 	}
 	
-	//OnClickListeners to show/hide the control bars for publisher and subscribers
-	private OnClickListener onSubscriberUIClick = new OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			if(mRoom.getmCurrentParticipant() != null) {
-					mSubscriberFragment.subscriberClick();
-					showArrowsOnSubscriber();	
+	public void setSubQualityMargins(){
+		if (mRoom.getmParticipants() != null) {
+			RelativeLayout.LayoutParams subQualityLayoutParams = (LayoutParams) mSubscriberQualityFragment
+					.getSubQualityContainer().getLayoutParams();
+			boolean pubControlBarVisible = mPublisherFragment
+					.ismPublisherWidgetVisible();
+			boolean pubStatusBarVisible = mPublisherStatusFragment
+					.ismPubStatusWidgetVisible();
+			RelativeLayout.LayoutParams pubControlLayoutParams = (LayoutParams) mPublisherFragment
+					.getmPublisherContainer().getLayoutParams();
+			RelativeLayout.LayoutParams pubStatusLayoutParams = (LayoutParams) mPublisherStatusFragment
+					.getMPubStatusContainer().getLayoutParams();
+
+			int bottomMargin = 0;
+
+			// control pub fragment
+			if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+				if (pubControlBarVisible) {
+					bottomMargin = pubControlLayoutParams.height + dpToPx(10);
+				}
+				if (pubStatusBarVisible && mArchiving) {
+					bottomMargin = pubStatusLayoutParams.height + dpToPx(10);
+				}
+				if (bottomMargin == 0) {
+					bottomMargin = dpToPx(10);
+				}
+				subQualityLayoutParams.rightMargin = dpToPx(10);
 			}
-			if (mRoom.getmPublisher() != null) {
+
+			subQualityLayoutParams.bottomMargin = bottomMargin;
+
+			mSubscriberQualityFragment.getSubQualityContainer()
+					.setLayoutParams(subQualityLayoutParams);
+		}
+    }
+	
+	private OnClickListener onViewClick = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+        	boolean visible = false;
+ 
+        	if (mRoom.getmPublisher() != null) {
+        		 // check visibility of bars
+            	if (!mPublisherFragment.ismPublisherWidgetVisible()) {
+            		visible = true;
+            	}
 				mPublisherFragment.publisherClick();
 				if (mArchiving) {
-					mPublisherStatusFragment.publisherClick();	
+					mPublisherStatusFragment.publisherClick();
 				}
-				setPublisherMargins();
-			}
-		}
-	};
-
-	private OnClickListener onPublisherUIClick = new OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			if (mRoom.getmCurrentParticipant() != null) {
-				mSubscriberFragment.subscriberClick();
-				showArrowsOnSubscriber();
-            }
-            if (mRoom.getmPublisher() != null) {
-            	mPublisherFragment.publisherClick();
-            	if (mArchiving) {
-            		mPublisherStatusFragment.publisherClick();
-            	}
-            	setPublisherMargins();
-            }
+                setPublisherMargins();
+            	if (mRoom.getmCurrentParticipant() != null) {
+            		mSubscriberFragment.showSubscriberWidget(visible);
+            		mSubscriberFragment.initSubscriberUI();
+                }
+        	}
         }
-	};
+    };
 
 	//Show next and last arrow on subscriber view if the number of subscribers is higher than 1
 	public void showArrowsOnSubscriber(){
@@ -605,7 +656,7 @@ public class ChatRoomActivity extends Activity implements
 		if (audioOnlyEnabled) {
 			mRoom.getmCurrentParticipant().getView().setVisibility(View.GONE);
 			mSubscriberAudioOnlyView.setVisibility(View.VISIBLE);
-			mSubscriberAudioOnlyView.setOnClickListener(onSubscriberUIClick);
+			mSubscriberAudioOnlyView.setOnClickListener(onViewClick);
 
 			// Audio only text for subscriber
 			TextView subStatusText = (TextView) findViewById(R.id.subscriberName);
@@ -614,6 +665,14 @@ public class ChatRoomActivity extends Activity implements
 			aa.setDuration(ANIMATION_DURATION);
 			subStatusText.startAnimation(aa);
 			
+			mRoom.getmCurrentParticipant()
+				.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
+					@Override
+					public void onAudioLevelUpdated(
+							SubscriberKit subscriber, float audioLevel) {
+						mAudioLevelView.setMeterValue(audioLevel);
+					}
+				}); 
 		} else {
 			if (!mSubscriberVideoOnly) {
 				mRoom.getmCurrentParticipant().getView().setVisibility(View.VISIBLE);

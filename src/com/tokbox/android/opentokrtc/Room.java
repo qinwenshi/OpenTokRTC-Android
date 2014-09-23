@@ -27,7 +27,6 @@ import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.Connection;
 import com.opentok.android.OpentokError;
 import com.opentok.android.Publisher;
-import com.opentok.android.PublisherKit;
 import com.opentok.android.Session;
 import com.opentok.android.Stream;
 
@@ -169,8 +168,8 @@ public class Room extends Session {
 
 	public void loadSubscriberView() {
 		//stop loading spinning
-        if (mActivity.getmLoadingSub().getVisibility() == View.VISIBLE) {
-        	mActivity.getmLoadingSub().setVisibility(View.GONE);
+        if (mActivity.getLoadingSub().getVisibility() == View.VISIBLE) {
+        	mActivity.getLoadingSub().setVisibility(View.GONE);
         }
          
         //show control bars
@@ -274,6 +273,15 @@ public class Room extends Session {
 
 	@Override
 	protected void onStreamReceived(Stream stream) {
+		
+		mHandler.postDelayed(new Runnable() {	  
+            @Override
+            public void run() {
+            	mActivity.getPublisherFragment().showPublisherWidget(true);
+            	mActivity.getPublisherFragment().initPublisherUI();
+            }
+        }, 0);	
+		
 		Participant p = new Participant(mContext, stream);
 	
 		//We can use connection data to obtain each user id
@@ -285,7 +293,7 @@ public class Room extends Session {
 		}
 		else {
 			// start loading spinning
-	        mActivity.getmLoadingSub().setVisibility(View.VISIBLE);
+	        mActivity.getLoadingSub().setVisibility(View.VISIBLE);
 		}
 
 		p.getView().setOnClickListener(this.onSubscriberUIClick);
@@ -320,7 +328,7 @@ public class Room extends Session {
 		}
 		
 	}
-
+	
 	@Override
 	protected void onSignalReceived(String type, String data,
 			Connection connection) {
@@ -381,7 +389,7 @@ public class Room extends Session {
             }
 	}
 	
-	@Override
+	/*@Override
    	protected void onPublisherAdded(PublisherKit publisher) {
     	mHandler.postDelayed(new Runnable() {	  
             @Override
@@ -390,7 +398,7 @@ public class Room extends Session {
             	mActivity.getmPublisherFragment().initPublisherUI();
             }
         }, 0);	
-    }
+    }*/
     
 
 	@Override

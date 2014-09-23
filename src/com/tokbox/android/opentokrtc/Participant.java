@@ -9,6 +9,7 @@ import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.OpentokError;
 import com.opentok.android.Stream;
 import com.opentok.android.Subscriber;
+import com.tokbox.android.opentokrtc.fragments.SubscriberQualityFragment.CongestionLevel;
 
 public class Participant extends Subscriber {
 
@@ -19,6 +20,7 @@ public class Participant extends Subscriber {
     private Context mContext;
     protected Boolean mSubscriberVideoOnly = false;
     private ChatRoomActivity mActivity;
+    private CongestionLevel congestion = CongestionLevel.Low;
     
 	public Participant(Context context, Stream stream) {
         super(context, stream);
@@ -48,20 +50,68 @@ public class Participant extends Subscriber {
     public Boolean getmSubscriberVideoOnly() {
 		return mSubscriberVideoOnly;
 	}
+    
+    @Override
+    public void onVideoDisabled(String reason) {
+    	super.onVideoDisabled(reason);
+    	Log.i(LOGTAG, "Video is disabled for the subscriber");
+        mSubscriberVideoOnly = true;
+    	mActivity.setAudioOnlyView(true);
+        
+        if (reason.equals("quality")) {
+        	mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.High);
+        	congestion = CongestionLevel.High;
+        	mActivity.setSubQualityMargins();
+        	mActivity.getSubscriberQualityFragment().showSubscriberWidget(true);
+        }
+    }
 
     @Override
-	protected void onVideoDisabled() {
-		super.onVideoDisabled();
-		Log.i(LOGTAG, "Video quality changed. It is disabled for the subscriber");
-		mSubscriberVideoOnly = true;
-		mActivity.setAudioOnlyView(true);
-	}
-    
+    public void onVideoEnabled(String reason) {
+        super.onVideoEnabled(reason);
+    	Log.i(LOGTAG, "Subscriber is enabled:" + reason);
+       
+    	mSubscriberVideoOnly = false;
+    	mActivity.setAudioOnlyView(false);
+       
+    	if (reason.equals("quality")) {
+    		mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.Low);
+        	congestion = CongestionLevel.Low;
+        	mActivity.getSubscriberQualityFragment().showSubscriberWidget(false);
+        } 
+    }
+
+    @Override
+   	public void onVideoDisableWarning() {
+   		Log.i(LOGTAG, "Video may be disabled soon due to network quality degradation. Add UI handling here.");	
+   		mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.Mid);
+   		congestion = CongestionLevel.Mid;
+   		mActivity.setSubQualityMargins();
+   		mActivity.getSubscriberQualityFragment().showSubscriberWidget(true);
+   	}
+
+   	@Override
+   	public void onVideoDisableWarningLifted() {
+   		Log.i(LOGTAG, "Video may no longer be disabled as stream quality improved. Add UI handling here.");
+   		mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.Low);
+   		congestion = CongestionLevel.Low;
+   		mActivity.getSubscriberQualityFragment().showSubscriberWidget(false);
+   	}
+
 	@Override
 	protected void onVideoDataReceived() {
 		super.onVideoDataReceived();
 		Log.i(LOGTAG, "First frame received");
 		mActivity.updateLoadingSub();
+		
+		//marinas
+		mSubscriberVideoOnly = true;
+    	mActivity.setAudioOnlyView(true);
+    	mActivity.getSubscriberQualityFragment().setCongestion(CongestionLevel.High);
+    	congestion = CongestionLevel.High;
+    	mActivity.setSubQualityMargins();
+    	mActivity.getSubscriberQualityFragment().showSubscriberWidget(true);
+        
 	}
 
 	@Override
