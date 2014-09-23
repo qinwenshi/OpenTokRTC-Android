@@ -470,6 +470,9 @@ public class ChatRoomActivity extends Activity implements
 		if (mRoom != null) {
 			mRoom.disconnect();
 		}
+		
+		restartAudioMode();
+		
 		finish();
 	}
 	
