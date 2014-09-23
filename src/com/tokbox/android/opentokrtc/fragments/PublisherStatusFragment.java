@@ -145,11 +145,11 @@ public class PublisherStatusFragment extends Fragment {
 		}
 	}
 
-	public boolean ismPubStatusWidgetVisible() {
+	public boolean isPubStatusWidgetVisible() {
 		return mPubStatusWidgetVisible;
 	}
 
-	public RelativeLayout getMPubStatusContainer() {
+	public RelativeLayout getPubStatusContainer() {
 		return mPubStatusContainer;
 	}
 
