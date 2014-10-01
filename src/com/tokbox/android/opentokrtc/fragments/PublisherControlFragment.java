@@ -212,11 +212,11 @@ public class PublisherControlFragment extends Fragment implements
 		initPublisherUI();
     }
     
-	public boolean ismPublisherWidgetVisible() {
+	public boolean isPublisherWidgetVisible() {
 		return mPublisherWidgetVisible;
 	}
 	
-	public RelativeLayout getmPublisherContainer() {
+	public RelativeLayout getPublisherContainer() {
 		return mPublisherContainer;
 	}
 }

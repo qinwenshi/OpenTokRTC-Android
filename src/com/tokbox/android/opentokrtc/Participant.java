@@ -9,6 +9,7 @@ import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.OpentokError;
 import com.opentok.android.Stream;
 import com.opentok.android.Subscriber;
+import com.tokbox.android.opentokrtc.fragments.SubscriberQualityFragment.CongestionLevel;
 
 public class Participant extends Subscriber {
 
@@ -48,15 +49,51 @@ public class Participant extends Subscriber {
     public Boolean getmSubscriberVideoOnly() {
 		return mSubscriberVideoOnly;
 	}
+    
+    @Override
+    public void onVideoDisabled(String reason) {
+    	super.onVideoDisabled(reason);
+    	Log.i(LOGTAG, "Video is disabled for the subscriber. Reason: "+reason);
+    	if (reason.equals("quality")) {
+        	mSubscriberVideoOnly = true;
+        	mActivity.setAudioOnlyView(true, this);
+         
+        	mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.High);
+        	mActivity.setSubQualityMargins();
+        	mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
+        }
+    }
 
     @Override
-	protected void onVideoDisabled() {
-		super.onVideoDisabled();
-		Log.i(LOGTAG, "Video quality changed. It is disabled for the subscriber");
-		mSubscriberVideoOnly = true;
-		mActivity.setAudioOnlyView(true);
-	}
-    
+    public void onVideoEnabled(String reason) {
+        super.onVideoEnabled(reason);
+    	Log.i(LOGTAG, "Subscriber is enabled:" + reason);
+    	
+    	if (reason.equals("quality")) {
+
+        	mSubscriberVideoOnly = false;
+        	mActivity.setAudioOnlyView(false, this);
+           
+    		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
+        	mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
+        } 
+    }
+
+    @Override
+   	public void onVideoDisableWarning() {
+   		Log.i(LOGTAG, "Video may be disabled soon due to network quality degradation. Add UI handling here.");	
+   		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Mid);
+   		mActivity.setSubQualityMargins();
+   		mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
+   	}
+
+   	@Override
+   	public void onVideoDisableWarningLifted() {
+   		Log.i(LOGTAG, "Video may no longer be disabled as stream quality improved. Add UI handling here.");
+   		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
+   		mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
+   	}
+
 	@Override
 	protected void onVideoDataReceived() {
 		super.onVideoDataReceived();
