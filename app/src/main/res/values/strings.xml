@@ -24,4 +24,6 @@
     <string name="archivingOff">Archiving off</string>
     <string name="sharingLink">Please join me at</string>
     <string	name="clearNotificationService">Clear Notification</string>
+
+    <string name="serverURL">"http://opentokrtc.com/"</string>
 </resources>

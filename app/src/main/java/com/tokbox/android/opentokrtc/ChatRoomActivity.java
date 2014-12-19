@@ -138,7 +138,7 @@ public class ChatRoomActivity extends Activity implements
      					R.drawable.headset));
        
 		Uri url = getIntent().getData();
-		serverURL = getResources().getString(R.urls.serverURL);
+		serverURL = getResources().getString(R.string.serverURL);
 		
         if(url == null) {
             mRoomName = getIntent().getStringExtra(ARG_ROOM_ID);
