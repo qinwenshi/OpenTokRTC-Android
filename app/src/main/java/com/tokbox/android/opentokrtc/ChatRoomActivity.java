@@ -204,8 +204,8 @@ public class ChatRoomActivity extends Activity implements
 		.setContentText("Ongoing call")
 		.setSmallIcon(R.drawable.ic_launcher).setOngoing(true);
 
-		Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
-		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    Intent notificationIntent = new Intent(this, ChatRoomActivity.class);
+    notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		notificationIntent.putExtra(ChatRoomActivity.ARG_ROOM_ID, mRoomName);
 		PendingIntent intent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 		mNotifyBuilder.setContentIntent(intent);
@@ -232,7 +232,7 @@ public class ChatRoomActivity extends Activity implements
 					ClearNotificationService.class), mConnection,
 					Context.BIND_AUTO_CREATE);
 			mIsBound = true;
-			startService(new Intent(ClearNotificationService.MY_SERVICE));
+			startService(notificationIntent);
 		}
 	}
 

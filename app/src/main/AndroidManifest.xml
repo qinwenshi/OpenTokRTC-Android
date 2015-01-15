@@ -21,9 +21,9 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <service android:name="ClearNotificationService" >
+        <service android:name="com.tokbox.android.opentokrtc.services.ClearNotificationService" >
             <intent-filter android:label="@string/clearNotificationService" >
-                <action android:name="com.tokbox.android.opentokrtc.ClearNotificationService" />
+                <action android:name="com.tokbox.android.opentokrtc.services.ClearNotificationService" />
             </intent-filter>
         </service>
         <activity
