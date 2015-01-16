@@ -13,116 +13,115 @@ import com.tokbox.android.opentokrtc.fragments.SubscriberQualityFragment.Congest
 
 public class Participant extends Subscriber {
 
-	private static final String LOGTAG = "Participant";
-	
-	private String mUserId;
+    private static final String LOGTAG = "Participant";
+
+    private String mUserId;
     private String mName;
     private Context mContext;
-    protected Boolean mSubscriberVideoOnly = false;
+    private Boolean mSubscriberVideoOnly = false;
+
     private ChatRoomActivity mActivity;
-    
-	public Participant(Context context, Stream stream) {
+
+    public Participant(Context context, Stream stream) {
         super(context, stream);
-    
+
         this.mContext = context;
         this.mActivity = (ChatRoomActivity) this.mContext;
-        setmName("User" + ((int)(Math.random()*1000)));
+        setName("User" + ((int) (Math.random() * 1000)));
         this.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
     }
 
-    public String getmUserId() {
-        return mUserId;
-    }
-
-    public void setmUserId(String name) {
+    public void setUserId(String name) {
         this.mUserId = name;
     }
 
-    public String getmName() {
+    public String getName() {
         return mName;
     }
 
-    public void setmName(String name) {
+    public void setName(String name) {
         this.mName = name;
     }
 
-    public Boolean getmSubscriberVideoOnly() {
-		return mSubscriberVideoOnly;
-	}
-    
+    public Boolean getSubscriberVideoOnly() {
+        return mSubscriberVideoOnly;
+    }
+
     @Override
     public void onVideoDisabled(String reason) {
-    	super.onVideoDisabled(reason);
-    	Log.i(LOGTAG, "Video is disabled for the subscriber. Reason: "+reason);
-    	if (reason.equals("quality")) {
-        	mSubscriberVideoOnly = true;
-        	mActivity.setAudioOnlyView(true, this);
-         
-        	mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.High);
-        	mActivity.setSubQualityMargins();
-        	mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
+        super.onVideoDisabled(reason);
+        Log.i(LOGTAG, "Video is disabled for the subscriber. Reason: " + reason);
+        if (reason.equals("quality")) {
+            mSubscriberVideoOnly = true;
+            mActivity.setAudioOnlyView(true, this);
+
+            mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.High);
+            mActivity.setSubQualityMargins();
+            mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
         }
     }
 
     @Override
     public void onVideoEnabled(String reason) {
         super.onVideoEnabled(reason);
-    	Log.i(LOGTAG, "Subscriber is enabled:" + reason);
-    	
-    	if (reason.equals("quality")) {
+        Log.i(LOGTAG, "Subscriber is enabled:" + reason);
 
-        	mSubscriberVideoOnly = false;
-        	mActivity.setAudioOnlyView(false, this);
-           
-    		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
-        	mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
-        } 
+        if (reason.equals("quality")) {
+
+            mSubscriberVideoOnly = false;
+            mActivity.setAudioOnlyView(false, this);
+
+            mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
+            mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
+        }
     }
 
     @Override
-   	public void onVideoDisableWarning() {
-   		Log.i(LOGTAG, "Video may be disabled soon due to network quality degradation. Add UI handling here.");	
-   		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Mid);
-   		mActivity.setSubQualityMargins();
-   		mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
-   	}
+    public void onVideoDisableWarning() {
+        Log.i(LOGTAG,
+                "Video may be disabled soon due to network quality degradation. Add UI handling here.");
+        mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Mid);
+        mActivity.setSubQualityMargins();
+        mActivity.mSubscriberQualityFragment.showSubscriberWidget(true);
+    }
 
-   	@Override
-   	public void onVideoDisableWarningLifted() {
-   		Log.i(LOGTAG, "Video may no longer be disabled as stream quality improved. Add UI handling here.");
-   		mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
-   		mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
-   	}
+    @Override
+    public void onVideoDisableWarningLifted() {
+        Log.i(LOGTAG,
+                "Video may no longer be disabled as stream quality improved. Add UI handling here.");
+        mActivity.mSubscriberQualityFragment.setCongestion(CongestionLevel.Low);
+        mActivity.mSubscriberQualityFragment.showSubscriberWidget(false);
+    }
 
-	@Override
-	protected void onVideoDataReceived() {
-		super.onVideoDataReceived();
-		Log.i(LOGTAG, "First frame received");
-		mActivity.updateLoadingSub();
-	}
+    @Override
+    protected void onVideoDataReceived() {
+        super.onVideoDataReceived();
+        Log.i(LOGTAG, "First frame received");
+        mActivity.updateLoadingSub();
+    }
 
-	@Override
-	protected void onError(OpentokError error) {
-		super.onError(error);
-		showErrorDialog(error);
-	}
+    @Override
+    protected void onError(OpentokError error) {
+        super.onError(error);
+        showErrorDialog(error);
+    }
 
-	private void showErrorDialog(OpentokError error) {
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-				this.mContext);
- 
-		alertDialogBuilder.setTitle("OpenTokRTC Error");
-		alertDialogBuilder
-			.setMessage(error.getMessage())
-			.setCancelable(false)
-			.setPositiveButton("Yes",new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog,int id) {
-						mActivity.finish();
-					}
-				  });
-		AlertDialog alertDialog = alertDialogBuilder.create();
-		
-		alertDialog.show();
-	}
-	
+    private void showErrorDialog(OpentokError error) {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                this.mContext);
+
+        alertDialogBuilder.setTitle("OpenTokRTC Error");
+        alertDialogBuilder
+                .setMessage(error.getMessage())
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        mActivity.finish();
+                    }
+                });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+
+        alertDialog.show();
+    }
+
 }

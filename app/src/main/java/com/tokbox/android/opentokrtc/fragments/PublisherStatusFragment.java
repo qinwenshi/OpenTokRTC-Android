@@ -19,138 +19,138 @@ import android.widget.TextView;
 
 public class PublisherStatusFragment extends Fragment {
 
-	private static final String LOGTAG = "demo-UI-pub-status-fragment";
-	// Animation constants
-	private static final int ANIMATION_DURATION = 500;
-	private static final int STATUS_ANIMATION_DURATION = 7000;
+    private static final String LOGTAG = "demo-UI-pub-status-fragment";
 
-	//Interface
-	private ImageButton archiving;
-	private TextView statusText;
-	protected RelativeLayout mPubStatusContainer;
-	
-	private ChatRoomActivity chatRoomActivity;
-	protected boolean mPubStatusWidgetVisible = false;
-	protected boolean mArchiving = false;
+    // Animation constants
+    private static final int ANIMATION_DURATION = 500;
 
-	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
+    private static final int STATUS_ANIMATION_DURATION = 7000;
 
-		Log.i(LOGTAG, "On attach Publisher status fragment");
-		chatRoomActivity = (ChatRoomActivity) activity;
-	}
+    //Interface
+    private ImageButton archiving;
 
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
-	}
+    private TextView statusText;
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.layout_fragment_pub_status,
-				container, false);
+    private RelativeLayout mPubStatusContainer;
 
-		mPubStatusContainer = (RelativeLayout) chatRoomActivity
-				.findViewById(R.id.fragment_pub_status_container);
-		archiving = (ImageButton) rootView.findViewById(R.id.archiving);
+    private boolean mPubStatusWidgetVisible = false;
 
-		statusText = (TextView) rootView.findViewById(R.id.statusLabel);
+    private boolean mArchiving = false;
 
-		if (chatRoomActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) container
-					.getLayoutParams();
+    private ChatRoomActivity chatRoomActivity;
 
-			DisplayMetrics metrics = new DisplayMetrics();
-			chatRoomActivity.getWindowManager().getDefaultDisplay()
-					.getMetrics(metrics);
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
 
-			params.width = metrics.widthPixels - chatRoomActivity.dpToPx(48);
-			container.setLayoutParams(params);
-		}
+        Log.i(LOGTAG, "On attach Publisher status fragment");
+        chatRoomActivity = (ChatRoomActivity) activity;
+    }
 
-		return rootView;
-	}
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.layout_fragment_pub_status,
+                container, false);
 
-	@Override
-	public void onDetach() {
-		super.onDetach();
-		Log.i(LOGTAG, "On detach Publisher status fragment");
-	}
+        mPubStatusContainer = (RelativeLayout) chatRoomActivity
+                .findViewById(R.id.fragment_pub_status_container);
+        archiving = (ImageButton) rootView.findViewById(R.id.archiving);
 
-	//Initialize publisher status bar
-	public void initPubStatusUI() {
-		chatRoomActivity.getmHandler()
-					.removeCallbacks(mPubStatusWidgetTimerTask);
-		chatRoomActivity.getmHandler().postDelayed(mPubStatusWidgetTimerTask,
-					STATUS_ANIMATION_DURATION);
-	}
-	
-	private Runnable mPubStatusWidgetTimerTask = new Runnable() {
-		@Override
-		public void run() {
-			if (mArchiving) {
-				showPubStatusWidget(false);
-				chatRoomActivity.setPublisherMargins();
-			}
-		}
-	};
+        statusText = (TextView) rootView.findViewById(R.id.statusLabel);
 
-	public void showPubStatusWidget(boolean show) {
-		showPubStatusWidget(show, true);
-	}
-	
-	//Set animation to show and hide the publisher status bar  
-	private void showPubStatusWidget(boolean show, boolean animate) {
-		mPubStatusContainer.clearAnimation();
-		mPubStatusWidgetVisible = show;
-		float dest = show ? 1.0f : 0.0f;
-		AlphaAnimation aa = new AlphaAnimation(1.0f - dest, dest);
-		aa.setDuration(animate ? ANIMATION_DURATION : 1);
-		aa.setFillAfter(true);
-		mPubStatusContainer.startAnimation(aa);
+        if (chatRoomActivity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE) {
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) container
+                    .getLayoutParams();
 
-		if (show && mArchiving) {
-			mPubStatusContainer.setVisibility(View.VISIBLE);
-		} else {
-			mPubStatusContainer.setVisibility(View.GONE);
-		}
-	}
+            DisplayMetrics metrics = new DisplayMetrics();
+            chatRoomActivity.getWindowManager().getDefaultDisplay()
+                    .getMetrics(metrics);
 
-	public void publisherClick() {
-		if (!mPubStatusWidgetVisible) {
-			showPubStatusWidget(true);
-		} else {
-			showPubStatusWidget(false);
-		}
+            params.width = metrics.widthPixels - chatRoomActivity.dpToPx(48);
+            container.setLayoutParams(params);
+        }
 
-		initPubStatusUI();
-	}
-	
-	//Update archiving status icon
-	public void updateArchivingUI(boolean archivingOn) {
-		archiving = (ImageButton) chatRoomActivity.findViewById(R.id.archiving);
-		this.mArchiving = archivingOn;
-		
-		if (archivingOn) {
-			statusText.setText(R.string.archivingOn);
-			archiving.setImageResource(R.drawable.archiving_on);
-			showPubStatusWidget(true);
-			initPubStatusUI();
-		}
+        return rootView;
+    }
 
-		else {
-			showPubStatusWidget(false);
-		}
-	}
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        Log.i(LOGTAG, "On detach Publisher status fragment");
+    }
 
-	public boolean isPubStatusWidgetVisible() {
-		return mPubStatusWidgetVisible;
-	}
+    //Initialize publisher status bar
+    public void initPubStatusUI() {
+        chatRoomActivity.getHandler()
+                .removeCallbacks(mPubStatusWidgetTimerTask);
+        chatRoomActivity.getHandler().postDelayed(mPubStatusWidgetTimerTask,
+                STATUS_ANIMATION_DURATION);
+    }
 
-	public RelativeLayout getPubStatusContainer() {
-		return mPubStatusContainer;
-	}
+    private Runnable mPubStatusWidgetTimerTask = new Runnable() {
+        @Override
+        public void run() {
+            if (mArchiving) {
+                showPubStatusWidget(false);
+                chatRoomActivity.setPublisherMargins();
+            }
+        }
+    };
+
+    public void showPubStatusWidget(boolean show) {
+        showPubStatusWidget(show, true);
+    }
+
+    //Set animation to show and hide the publisher status bar
+    private void showPubStatusWidget(boolean show, boolean animate) {
+        mPubStatusContainer.clearAnimation();
+        mPubStatusWidgetVisible = show;
+        float dest = show ? 1.0f : 0.0f;
+        AlphaAnimation aa = new AlphaAnimation(1.0f - dest, dest);
+        aa.setDuration(animate ? ANIMATION_DURATION : 1);
+        aa.setFillAfter(true);
+        mPubStatusContainer.startAnimation(aa);
+
+        if (show && mArchiving) {
+            mPubStatusContainer.setVisibility(View.VISIBLE);
+        } else {
+            mPubStatusContainer.setVisibility(View.GONE);
+        }
+    }
+
+    public void publisherClick() {
+        if (!mPubStatusWidgetVisible) {
+            showPubStatusWidget(true);
+        } else {
+            showPubStatusWidget(false);
+        }
+
+        initPubStatusUI();
+    }
+
+    //Update archiving status icon
+    public void updateArchivingUI(boolean archivingOn) {
+        archiving = (ImageButton) chatRoomActivity.findViewById(R.id.archiving);
+        this.mArchiving = archivingOn;
+
+        if (archivingOn) {
+            statusText.setText(R.string.archivingOn);
+            archiving.setImageResource(R.drawable.archiving_on);
+            showPubStatusWidget(true);
+            initPubStatusUI();
+        } else {
+            showPubStatusWidget(false);
+        }
+    }
+
+    public boolean isPubStatusWidgetVisible() {
+        return mPubStatusWidgetVisible;
+    }
+
+    public RelativeLayout getPubStatusContainer() {
+        return mPubStatusContainer;
+    }
 
 }
