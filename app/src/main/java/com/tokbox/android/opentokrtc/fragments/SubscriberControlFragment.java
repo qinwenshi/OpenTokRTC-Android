@@ -17,23 +17,31 @@ import android.widget.TextView;
 
 public class SubscriberControlFragment extends Fragment implements
         View.OnClickListener {
-	
-	private static final String LOGTAG = "demo-UI-sub-control-fragment";
+
+    private static final String LOGTAG = "demo-UI-sub-control-fragment";
+
     // Animation constants
     private static final int ANIMATION_DURATION = 500;
+
     private static final int SUBSCRIBER_CONTROLS_DURATION = 7000;
 
     //Interface
     private boolean mSubscriberWidgetVisible = false;
+
     private ImageButton mSubscriberMute;
+
     private TextView mSubscriberName;
+
     private RelativeLayout mSubContainer;
 
     private SubscriberCallbacks mCallbacks = sOpenTokCallbacks;
+
     private ChatRoomActivity chatRoomActivity;
 
     public interface SubscriberCallbacks {
+
         public void onMuteSubscriber();
+
         public void onStatusSubBar();
     }
 
@@ -41,12 +49,10 @@ public class SubscriberControlFragment extends Fragment implements
 
         @Override
         public void onMuteSubscriber() {
-            return;
         }
-        
+
         @Override
         public void onStatusSubBar() {
-            return;
         }
     };
 
@@ -80,7 +86,7 @@ public class SubscriberControlFragment extends Fragment implements
                 container, false);
 
         mSubContainer = (RelativeLayout) chatRoomActivity
-				.findViewById(R.id.fragment_sub_container);
+                .findViewById(R.id.fragment_sub_container);
 
         mSubscriberMute = (ImageButton) rootView
                 .findViewById(R.id.muteSubscriber);
@@ -88,7 +94,7 @@ public class SubscriberControlFragment extends Fragment implements
 
         mSubscriberName = (TextView) rootView.findViewById(R.id.subscriberName);
 
-		showSubscriberWidget(mSubscriberWidgetVisible, false);
+        showSubscriberWidget(mSubscriberWidgetVisible, false);
 
         return rootView;
     }
@@ -104,27 +110,27 @@ public class SubscriberControlFragment extends Fragment implements
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-        case R.id.muteSubscriber:
-        	muteSubscriber();
-            break;
+            case R.id.muteSubscriber:
+                muteSubscriber();
+                break;
         }
     }
-    
+
     //Initialize subscriber status bar
     public void initSubscriberUI() {
-     	chatRoomActivity.getmHandler().removeCallbacks(
-                 mSubscriberWidgetTimerTask);
-     	chatRoomActivity.getmHandler().postDelayed(mSubscriberWidgetTimerTask,
-                 SUBSCRIBER_CONTROLS_DURATION);
-        mSubscriberName.setText(chatRoomActivity.getmRoom().getmCurrentParticipant().getStream()
-                 .getName());
+        chatRoomActivity.getHandler().removeCallbacks(
+                mSubscriberWidgetTimerTask);
+        chatRoomActivity.getHandler().postDelayed(mSubscriberWidgetTimerTask,
+                SUBSCRIBER_CONTROLS_DURATION);
+        mSubscriberName.setText(chatRoomActivity.getRoom().getCurrentParticipant().getStream()
+                .getName());
     }
-    
+
     public void initSubscriberWidget() {
-    	mSubscriberMute.setImageResource(chatRoomActivity.getmRoom().getmCurrentParticipant()
-                 .getSubscribeToAudio() ? R.drawable.unmute_sub : R.drawable.mute_sub);
+        mSubscriberMute.setImageResource(chatRoomActivity.getRoom().getCurrentParticipant()
+                .getSubscribeToAudio() ? R.drawable.unmute_sub : R.drawable.mute_sub);
     }
-    
+
     private Runnable mSubscriberWidgetTimerTask = new Runnable() {
         @Override
         public void run() {
@@ -138,44 +144,33 @@ public class SubscriberControlFragment extends Fragment implements
     }
 
     //Set animation to show and hide the subscriber control bar  
-    private void showSubscriberWidget(boolean show, boolean animate) {   	
-    	mSubContainer.clearAnimation();
-		mSubscriberWidgetVisible = show;
-		float dest = show ? 1.0f : 0.0f;
-		AlphaAnimation aa = new AlphaAnimation(1.0f - dest, dest);
-		aa.setDuration(animate ? ANIMATION_DURATION : 1);
-		aa.setFillAfter(true);
-		mSubContainer.startAnimation(aa);
+    private void showSubscriberWidget(boolean show, boolean animate) {
+        mSubContainer.clearAnimation();
+        mSubscriberWidgetVisible = show;
+        float dest = show ? 1.0f : 0.0f;
+        AlphaAnimation aa = new AlphaAnimation(1.0f - dest, dest);
+        aa.setDuration(animate ? ANIMATION_DURATION : 1);
+        aa.setFillAfter(true);
+        mSubContainer.startAnimation(aa);
 
-		if (show) {
-			mSubscriberMute.setClickable(true);
-			mSubContainer.setVisibility(View.VISIBLE);
-		} else {
-			mSubscriberMute.setClickable(false);
-			mSubContainer.setVisibility(View.GONE);
-		}
-    }
-
-    public void subscriberClick() {
-        if (!mSubscriberWidgetVisible) {
-            showSubscriberWidget(true);
+        if (show) {
+            mSubscriberMute.setClickable(true);
+            mSubContainer.setVisibility(View.VISIBLE);
+        } else {
+            mSubscriberMute.setClickable(false);
+            mSubContainer.setVisibility(View.GONE);
         }
-        else {
-        	 showSubscriberWidget(false);
-        }
-        
-        initSubscriberUI();
     }
 
     public void updateStatusSubBar() {
         mCallbacks.onStatusSubBar();
     }
-    
+
     public void muteSubscriber() {
         mCallbacks.onMuteSubscriber();
 
-        mSubscriberMute.setImageResource(chatRoomActivity.getmRoom().getmCurrentParticipant()
+        mSubscriberMute.setImageResource(chatRoomActivity.getRoom().getCurrentParticipant()
                 .getSubscribeToAudio() ? R.drawable.unmute_sub : R.drawable.mute_sub);
     }
-  
+
 }
